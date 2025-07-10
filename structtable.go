@@ -467,6 +467,7 @@ type WTableRowProperties struct {
 	XMLName        xml.Name `xml:"w:trPr,omitempty"`
 	TableRowHeight *WTableRowHeight
 	Justification  *Justification
+	ConfStyle      *WTableRowConfStyle
 }
 
 // UnmarshalXML ...
@@ -522,6 +523,23 @@ func (t *WTableRowProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) e
 		}
 	}
 	return nil
+}
+
+type WTableRowConfStyle struct {
+	XMLName          xml.Name `xml:"w:cnfStyle,omitempty"`
+	Val              string   `xml:"w:val,attr"`
+	FirstRow         string   `xml:"w:firstRow,attr"`
+	LastRow          string   `xml:"w:lastRow,attr"`
+	FirstCol         string   `xml:"w:firstColumn,attr"`
+	LastCol          string   `xml:"w:lastColumn,attr"`
+	OddVBand         string   `xml:"w:oddVBand,attr"`
+	EvenVBand        string   `xml:"w:evenVBand,attr"`
+	OddHBand         string   `xml:"w:oddHBand,attr"`
+	EvenHBand        string   `xml:"w:evenHBand,attr"`
+	FirstRowFirstCol string   `xml:"w:firstRowFirstColumn,attr"`
+	FirstRowLastCol  string   `xml:"w:firstRowLastColumn,attr"`
+	LastRowFirstCol  string   `xml:"w:lastRowFirstColumn,attr"`
+	LastRowLastCol   string   `xml:"w:lastRowLastColumn,attr"`
 }
 
 // WTableRowHeight represents the height of a row within a table.
