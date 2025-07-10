@@ -58,7 +58,7 @@ func (f *Docx) AddTable(
 	wTableWidth := &WTableWidth{Type: "auto"}
 
 	if tableWidth > 0 {
-		wTableWidth = &WTableWidth{W: tableWidth}
+		wTableWidth = &WTableWidth{W: tableWidth, Type: "dxa"}
 	}
 
 	tbl := &Table{
@@ -89,13 +89,14 @@ func (f *Docx) AddTable(
 func (f *Docx) AddTableTwips(
 	rowHeights []int64,
 	colWidths []int64,
-	tableWidth int64,
 	borderColors *APITableBorderColors,
 ) *Table {
 	grids := make([]*WGridCol, len(colWidths))
 	trs := make([]*WTableRow, len(rowHeights))
+	var tableWidth int64 = 0
 	for i, w := range colWidths {
 		if w > 0 {
+			tableWidth += w
 			grids[i] = &WGridCol{
 				W: w,
 			}
@@ -130,7 +131,7 @@ func (f *Docx) AddTableTwips(
 	wTableWidth := &WTableWidth{Type: "auto"}
 
 	if tableWidth > 0 {
-		wTableWidth = &WTableWidth{W: tableWidth}
+		wTableWidth = &WTableWidth{W: tableWidth, Type: "dxa"}
 	}
 
 	tbl := &Table{
@@ -155,6 +156,62 @@ func (f *Docx) AddTableTwips(
 	}
 	f.Document.Body.Items = append(f.Document.Body.Items, tbl)
 	return tbl
+}
+
+// Style allows to set table table style
+func (t *Table) Style(style string) *Table {
+	t.TableProperties.Style = &WTableStyle{
+		Val: style,
+	}
+	t.TableProperties.TableBorders = nil
+	return t
+}
+
+// Look allows to set table table style options
+func (t *Table) Look(val string, firstRow, firstCol, lastRow, lastCol, noHBand, noVBand int) *Table {
+	t.TableProperties.Look = &WTableLook{
+		Val:      val,
+		FirstRow: firstRow,
+		FirstCol: firstCol,
+		LastRow:  lastRow,
+		LastCol:  lastCol,
+		NoHBand:  noHBand,
+		NoVBand:  noVBand,
+	}
+	return t
+}
+
+// Width allows to set width of the table
+func (t *Table) Width(w int64) *Table {
+	typ := "auto"
+	if w > 0 {
+		typ = "dxa"
+	}
+	t.TableProperties.Width = &WTableWidth{
+		W:    w,
+		Type: typ,
+	}
+	return t
+}
+
+// ColGrid allows to set cols width
+func (t *Table) ColGrid(w []int64) *Table {
+	if len(w) > 0 {
+		var g []*WGridCol = make([]*WGridCol, len(w))
+		var total int64 = 0
+
+		for i, v := range w {
+			total += v
+			g[i] = &WGridCol{
+				W: v,
+			}
+		}
+		t.TableGrid = &WTableGrid{
+			GridCols: g,
+		}
+		t.Width(total)
+	}
+	return t
 }
 
 // Justification allows to set table's horizonal alignment
@@ -191,12 +248,55 @@ func (w *WTableRow) Justification(val string) *WTableRow {
 	return w
 }
 
+// ConfStyle allows to set Row confStyle apply to first row
+func (w *WTableRow) ConfStyle(val, firstRow, firstCol, lastRow, lastCol, oddHBand, evenHBand, oddVBand, evenVBand,
+	firstRowFirstCol, firstRowLastCol, lastRowFirstCol, lastRowLastCol string) *WTableRow {
+
+	if w.TableRowProperties == nil {
+		w.TableRowProperties = &WTableRowProperties{}
+	}
+
+	w.TableRowProperties.ConfStyle = &WTableRowConfStyle{
+		Val:              val,
+		FirstRow:         firstRow,
+		LastRow:          lastRow,
+		FirstCol:         firstCol,
+		LastCol:          lastCol,
+		FirstRowFirstCol: firstRowFirstCol,
+		FirstRowLastCol:  firstRowLastCol,
+		LastRowFirstCol:  lastRowFirstCol,
+		LastRowLastCol:   lastRowFirstCol,
+		OddHBand:         oddHBand,
+		EvenHBand:        evenHBand,
+		OddVBand:         oddVBand,
+		EvenVBand:        evenVBand,
+	}
+
+	return w
+}
+
 // Shade allows to set cell's shade
 func (c *WTableCell) Shade(val, color, fill string) *WTableCell {
 	c.TableCellProperties.Shade = &Shade{
 		Val:   val,
 		Color: color,
 		Fill:  fill,
+	}
+	return c
+}
+
+// Width allows to set width of the cell
+func (c *WTableCell) Width(w int64) *WTableCell {
+	typ := "auto"
+	if w > 0 {
+		typ = "dxa"
+	}
+	if c.TableCellProperties == nil {
+		c.TableCellProperties = &WTableCellProperties{}
+	}
+	c.TableCellProperties.TableCellWidth = &WTableCellWidth{
+		W:    w,
+		Type: typ,
 	}
 	return c
 }
