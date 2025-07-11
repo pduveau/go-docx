@@ -2,7 +2,7 @@
 
 One of the most functional libraries to read and write .docx (a.k.a. Microsoft Word documents or ECMA-376 Office Open XML) files in Go.
 
-This is a variant optimized and expanded by fumiama. The original repo is [gonfva/docxlib](https://github.com/gonfva/docxlib).
+This is a variant optimized and expanded by pduveau. The original repo is [gonfva/docxlib](https://github.com/gonfva/docxlib).
 
 ## Introduction
 

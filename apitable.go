@@ -3,6 +3,7 @@
    Copyright (c) 2021 Gonzalo Fernandez-Victorio
    Copyright (c) 2021 Basement Crowd Ltd (https://www.basementcrowd.com)
    Copyright (c) 2023 Fumiama Minamoto (源文雨)
+   Copyright (c) 2025 Philippe Duveau
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published
@@ -89,6 +90,7 @@ func (f *Docx) AddTable(
 func (f *Docx) AddTableTwips(
 	rowHeights []int64,
 	colWidths []int64,
+	tableWidth int64,
 	borderColors *APITableBorderColors,
 ) *Table {
 	grids := make([]*WGridCol, len(colWidths))
@@ -216,12 +218,12 @@ func (t *Table) ColGrid(w []int64) *Table {
 
 // Justification allows to set table's horizonal alignment
 //
-//	w:jc 属性的取值可以是以下之一：
-//		start：左对齐。
-//		center：居中对齐。
-//		end：右对齐。
-//		both：两端对齐。
-//		distribute：分散对齐。
+//	w:jc possible values：
+//		start
+//		center
+//		end
+//		both： justify
+//		distribute： disperse Alignment
 func (t *Table) Justification(val string) *Table {
 	if t.TableProperties.Justification == nil {
 		t.TableProperties.Justification = &Justification{Val: val}
@@ -233,12 +235,12 @@ func (t *Table) Justification(val string) *Table {
 
 // Justification allows to set table's horizonal alignment
 //
-//	w:jc 属性的取值可以是以下之一：
-//		start：左对齐。
-//		center：居中对齐。
-//		end：右对齐。
-//		both：两端对齐。
-//		distribute：分散对齐。
+//	w:jc possible values：
+//		start
+//		center
+//		end
+//		both： justify
+//		distribute： disperse Alignment
 func (w *WTableRow) Justification(val string) *WTableRow {
 	if w.TableRowProperties.Justification == nil {
 		w.TableRowProperties.Justification = &Justification{Val: val}

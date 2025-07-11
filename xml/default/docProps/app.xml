@@ -2,5 +2,5 @@
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
     xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
     <Template>Normal.dotm</Template>
-    <Application>fumiama-docxlib</Application>
+    <Application>docxlib</Application>
 </Properties>
