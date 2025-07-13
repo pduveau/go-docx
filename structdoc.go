@@ -138,8 +138,8 @@ func (b *Body) DropDrawingOf(name string) {
 			}
 			_ = f.Call(nil)
 		case *Table:
-			for _, tr := range o.TableRows {
-				for _, tc := range tr.TableCells {
+			for _, tr := range o.Rows {
+				for _, tc := range tr.Cells {
 					for _, p := range tc.Paragraphs {
 						f := reflect.ValueOf(p).MethodByName("Drop" + name)
 						if !f.IsValid() {
@@ -333,13 +333,13 @@ func (p *Paragraph) copymedia(to *Docx) (np Paragraph) {
 
 func (t *Table) copymedia(to *Docx) (nt Table) {
 	nt = *t
-	nt.TableRows = make([]*WTableRow, 0, len(t.TableRows))
+	nt.Rows = make([]*WTableRow, 0, len(t.Rows))
 	nt.file = to
-	for _, tr := range t.TableRows {
+	for _, tr := range t.Rows {
 		ntr := *tr
-		ntr.TableCells = make([]*WTableCell, 0, len(tr.TableCells))
+		ntr.Cells = make([]*WTableCell, 0, len(tr.Cells))
 		ntr.file = to
-		for _, tc := range tr.TableCells {
+		for _, tc := range tr.Cells {
 			ntc := *tc
 			ntc.Paragraphs = make([]*Paragraph, 0, len(tc.Paragraphs))
 			ntc.file = to
@@ -347,9 +347,9 @@ func (t *Table) copymedia(to *Docx) (nt Table) {
 				np := p.copymedia(to)
 				ntc.Paragraphs = append(ntc.Paragraphs, &np)
 			}
-			ntr.TableCells = append(ntr.TableCells, &ntc)
+			ntr.Cells = append(ntr.Cells, &ntc)
 		}
-		nt.TableRows = append(nt.TableRows, &ntr)
+		nt.Rows = append(nt.Rows, &ntr)
 	}
 	return
 }

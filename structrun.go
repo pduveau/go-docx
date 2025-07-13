@@ -319,6 +319,17 @@ func (r *RunProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 	return nil
 }
 
+func (t *RunProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if t.Fonts == nil && t.Bold == nil && t.ICs == nil && t.Italic == nil && t.Highlight == nil &&
+		t.Color == nil && t.Size == nil && t.SizeCs == nil && t.Spacing == nil && t.RunStyle == nil &&
+		t.Style == nil && t.Shade == nil && t.Kern == nil && t.Underline == nil && t.VertAlign == nil &&
+		t.Strike == nil {
+		return nil
+	}
+	type _t RunProperties
+	return e.Encode((*_t)(t))
+}
+
 // RunFonts specifies the fonts used in the text of a run.
 type RunFonts struct {
 	XMLName  xml.Name `xml:"w:rFonts,omitempty"`

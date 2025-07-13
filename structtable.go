@@ -28,26 +28,35 @@ import (
 
 // Table represents a table within a Word document.
 type Table struct {
-	XMLName         xml.Name `xml:"w:tbl,omitempty"`
-	TableProperties *WTableProperties
-	TableGrid       *WTableGrid
-	TableRows       []*WTableRow
+	XMLName    xml.Name `xml:"w:tbl,omitempty"`
+	Properties *WTableProperties
+	Grid       *WTableGrid
+	Rows       []*WTableRow
 
+	confStyle struct {
+		firstRow *WTableConfStyle
+		firstCol *WTableConfStyle
+		lastRow  *WTableConfStyle
+		lastCol  *WTableConfStyle
+		oddHBand *WTableConfStyle
+		oddVBand *WTableConfStyle
+		none     *WTableConfStyle
+	}
 	file *Docx
 }
 
 func (t *Table) String() string {
-	if len(t.TableRows) == 0 || len(t.TableRows[0].TableCells) == 0 {
+	if len(t.Rows) == 0 || len(t.Rows[0].Cells) == 0 {
 		return ""
 	}
 	sb := strings.Builder{}
 	sb.WriteString("| ")
-	for i := 0; i < len(t.TableRows[0].TableCells); i++ {
+	for i := 0; i < len(t.Rows[0].Cells); i++ {
 		sb.WriteString(" :----: |")
 	}
-	for _, r := range t.TableRows {
+	for _, r := range t.Rows {
 		sb.WriteString("\n|")
-		for _, c := range r.TableCells {
+		for _, c := range r.Cells {
 			if len(c.Paragraphs) > 0 && len(c.Paragraphs[0].Children) > 0 {
 				sb.WriteByte(' ')
 				sb.WriteString(c.Paragraphs[0].String())
@@ -58,6 +67,111 @@ func (t *Table) String() string {
 		}
 	}
 	return sb.String()
+}
+
+func (t *Table) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+
+	if t.Rows == nil || len(t.Rows) == 0 {
+		return nil
+	}
+
+	oddH := 0
+	if t.confStyle.firstRow != nil {
+		oddH = 1
+	}
+	oddV := 0
+	if t.confStyle.firstCol != nil {
+		oddV = 1
+	}
+
+	for i, r := range t.Rows {
+		if t.confStyle.oddHBand != nil {
+			if i%2 == oddH {
+				if r.Properties == nil {
+					r.Properties = &WTableRowProperties{}
+				}
+				r.Properties.ConfStyle = t.confStyle.oddHBand
+			}
+		}
+
+		if r.Cells != nil && len(r.Cells) > 0 {
+			ov := 0
+
+			for j, c := range r.Cells {
+				// add paragraph if forbidden
+				if c.Paragraphs == nil {
+					c.AddParagraph()
+				}
+
+				var cs *WTableConfStyle = nil
+
+				// vertical band management first in order to be overwritten later
+				// ov is the odd vertical position with span applied
+				if t.confStyle.oddVBand != nil && ov%2 == oddV {
+					cs = t.confStyle.oddVBand
+				}
+				if c.Properties.GridSpan != nil {
+					ov += c.Properties.GridSpan.Val
+				} else {
+					ov++
+				}
+
+				fc_lc := false
+
+				lc := len(r.Cells)
+				if t.confStyle.lastCol != nil {
+					lc--
+					fc_lc = true
+				}
+
+				fc := -1
+				if t.confStyle.firstCol != nil {
+					fc = 0
+					fc_lc = true
+				}
+
+				if j == fc {
+					cs = t.confStyle.firstCol
+				} else {
+					if j < lc {
+						if fc_lc {
+							for _, p := range c.Paragraphs {
+								if p.Properties == nil {
+									p.Properties = &ParagraphProperties{}
+								}
+								if i%2 == oddH {
+									p.Properties.ConfStyle = t.confStyle.oddHBand
+								} else {
+									p.Properties.ConfStyle = t.confStyle.none
+								}
+							}
+						}
+					} else {
+						cs = t.confStyle.lastCol
+					}
+				}
+
+				c.Properties.ConfStyle = cs
+			}
+		}
+		if t.confStyle.lastRow != nil {
+			lr := len(t.Rows) - 1
+			if t.Rows[lr].Properties == nil {
+				t.Rows[lr].Properties = &WTableRowProperties{}
+			}
+			t.Rows[lr].Properties.ConfStyle = t.confStyle.lastRow
+		}
+		if t.confStyle.firstRow != nil {
+			if t.Rows[0].Properties == nil {
+				t.Rows[0].Properties = &WTableRowProperties{}
+			}
+			t.Rows[0].Properties.ConfStyle = t.confStyle.firstRow
+		}
+	}
+
+	type _t Table
+
+	return e.Encode((*_t)(t))
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface.
@@ -79,16 +193,16 @@ func (t *Table) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
-				t.TableRows = append(t.TableRows, &value)
+				t.Rows = append(t.Rows, &value)
 			case "tblPr":
-				t.TableProperties = new(WTableProperties)
-				err = d.DecodeElement(t.TableProperties, &tt)
+				t.Properties = new(WTableProperties)
+				err = d.DecodeElement(t.Properties, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
 			case "tblGrid":
-				t.TableGrid = new(WTableGrid)
-				err = d.DecodeElement(t.TableGrid, &tt)
+				t.Grid = new(WTableGrid)
+				err = d.DecodeElement(t.Grid, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
@@ -101,6 +215,8 @@ func (t *Table) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 			}
 		}
 	}
+
+	t.setConfStyle()
 	return nil
 }
 
@@ -111,8 +227,16 @@ type WTableProperties struct {
 	Style         *WTableStyle
 	Width         *WTableWidth
 	Justification *Justification `xml:"w:jc,omitempty"`
-	TableBorders  *WTableBorders `xml:"w:tblBorders"`
+	Borders       *WTableBorders `xml:"w:tblBorders"`
 	Look          *WTableLook
+}
+
+func (t *WTableProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if t.Position == nil && t.Style == nil && t.Width == nil && t.Justification == nil && t.Borders == nil && t.Look == nil {
+		return nil
+	}
+	type _t WTableProperties
+	return e.Encode((*_t)(t))
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface.
@@ -165,8 +289,8 @@ func (t *WTableProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) erro
 					return err
 				}
 			case "tblBorders":
-				t.TableBorders = new(WTableBorders)
-				err = d.DecodeElement(t.TableBorders, &tt)
+				t.Borders = new(WTableBorders)
+				err = d.DecodeElement(t.Borders, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
@@ -261,7 +385,11 @@ func (t *WTableStyle) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err 
 	return err
 }
 
-// WTableWidth represents the width of a table in a Word document.
+// WTableWidth represents the width of a table/cell in a Word document.
+// Type:
+//
+//	"auto"： by content
+//	"dxa"： in Point
 type WTableWidth struct {
 	XMLName xml.Name `xml:"w:tblW,omitempty"`
 	W       int64    `xml:"w:w,attr"`
@@ -400,31 +528,15 @@ func (g *WGridCol) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err err
 
 // WTableRow represents a row within a table.
 type WTableRow struct {
-	XMLName xml.Name `xml:"w:tr,omitempty"`
-	// RsidR              string   `xml:"w:rsidR,attr,omitempty"`
-	// RsidRPr            string   `xml:"w:rsidRPr,attr,omitempty"`
-	// RsidTr             string   `xml:"w:rsidTr,attr,omitempty"`
-	TableRowProperties *WTableRowProperties
-	TableCells         []*WTableCell
+	XMLName    xml.Name `xml:"w:tr,omitempty"`
+	Properties *WTableRowProperties
+	Cells      []*WTableCell
 
 	file *Docx
 }
 
 // UnmarshalXML ...
 func (w *WTableRow) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
-	/*for _, attr := range start.Attr {
-		switch attr.Name.Local {
-		case "rsidR":
-			w.RsidR = attr.Value
-		case "rsidRPr":
-			w.RsidRPr = attr.Value
-		case "rsidTr":
-			w.RsidTr = attr.Value
-		default:
-			// ignore other attributes
-		}
-	}*/
-
 	for {
 		t, err := d.Token()
 		if err == io.EOF {
@@ -434,11 +546,14 @@ func (w *WTableRow) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 			return err
 		}
 
+		if w.Properties == nil {
+			w.Properties = new(WTableRowProperties)
+		}
+
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "trPr":
-				w.TableRowProperties = new(WTableRowProperties)
-				err = d.DecodeElement(w.TableRowProperties, &tt)
+				err = d.DecodeElement(w.Properties, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
@@ -449,7 +564,7 @@ func (w *WTableRow) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
-				w.TableCells = append(w.TableCells, &value)
+				w.Cells = append(w.Cells, &value)
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -464,10 +579,19 @@ func (w *WTableRow) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 
 // WTableRowProperties represents the properties of a row within a table.
 type WTableRowProperties struct {
-	XMLName        xml.Name `xml:"w:trPr,omitempty"`
-	TableRowHeight *WTableRowHeight
-	Justification  *Justification
-	ConfStyle      *WTableRowConfStyle
+	XMLName       xml.Name `xml:"w:trPr,omitempty"`
+	Height        *WTableRowHeight
+	Justification *Justification
+	ConfStyle     *WTableConfStyle
+}
+
+// MarshalXML ...
+func (t *WTableRowProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if t.Height == nil && t.Justification == nil && t.ConfStyle == nil {
+		return nil
+	}
+	type _t WTableRowProperties
+	return e.Encode((*_t)(t))
 }
 
 // UnmarshalXML ...
@@ -496,7 +620,7 @@ func (t *WTableRowProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) e
 						th.Rule = attr.Value
 					}
 				}
-				t.TableRowHeight = th
+				t.Height = th
 				err = d.Skip()
 				if err != nil {
 					return err
@@ -514,6 +638,12 @@ func (t *WTableRowProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) e
 				if err != nil {
 					return err
 				}
+			case "confStyle":
+				t.ConfStyle = new(WTableConfStyle)
+				err = d.DecodeElement(t.ConfStyle, &tt)
+				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+					return err
+				}
 			default:
 				err = d.Skip()
 				if err != nil {
@@ -525,21 +655,63 @@ func (t *WTableRowProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) e
 	return nil
 }
 
-type WTableRowConfStyle struct {
+type WTableConfStyle struct {
 	XMLName          xml.Name `xml:"w:cnfStyle,omitempty"`
 	Val              string   `xml:"w:val,attr"`
-	FirstRow         string   `xml:"w:firstRow,attr"`
-	LastRow          string   `xml:"w:lastRow,attr"`
-	FirstCol         string   `xml:"w:firstColumn,attr"`
-	LastCol          string   `xml:"w:lastColumn,attr"`
-	OddVBand         string   `xml:"w:oddVBand,attr"`
-	EvenVBand        string   `xml:"w:evenVBand,attr"`
-	OddHBand         string   `xml:"w:oddHBand,attr"`
-	EvenHBand        string   `xml:"w:evenHBand,attr"`
-	FirstRowFirstCol string   `xml:"w:firstRowFirstColumn,attr"`
-	FirstRowLastCol  string   `xml:"w:firstRowLastColumn,attr"`
-	LastRowFirstCol  string   `xml:"w:lastRowFirstColumn,attr"`
-	LastRowLastCol   string   `xml:"w:lastRowLastColumn,attr"`
+	FirstRow         int      `xml:"w:firstRow,attr"`
+	LastRow          int      `xml:"w:lastRow,attr"`
+	FirstCol         int      `xml:"w:firstColumn,attr"`
+	LastCol          int      `xml:"w:lastColumn,attr"`
+	OddVBand         int      `xml:"w:oddVBand,attr"`
+	EvenVBand        int      `xml:"w:evenVBand,attr"`
+	OddHBand         int      `xml:"w:oddHBand,attr"`
+	EvenHBand        int      `xml:"w:evenHBand,attr"`
+	FirstRowFirstCol int      `xml:"w:firstRowFirstColumn,attr"`
+	FirstRowLastCol  int      `xml:"w:firstRowLastColumn,attr"`
+	LastRowFirstCol  int      `xml:"w:lastRowFirstColumn,attr"`
+	LastRowLastCol   int      `xml:"w:lastRowLastColumn,attr"`
+}
+
+// UnmarshalXML ...
+func (t *WTableConfStyle) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	for _, attr := range start.Attr {
+		if attr.Value == "" {
+			continue
+		}
+		switch attr.Name.Local {
+		case "val":
+			t.Val = attr.Value
+		case "firstRow":
+			t.FirstRow = int(attr.Value[0] - '0')
+		case "lastRow":
+			t.LastRow = int(attr.Value[0] - '0')
+		case "firstColumn":
+			t.FirstCol = int(attr.Value[0] - '0')
+		case "lastColumn":
+			t.LastCol = int(attr.Value[0] - '0')
+		case "oddHBand":
+			t.OddHBand = int(attr.Value[0] - '0')
+		case "evenHBand":
+			t.EvenHBand = int(attr.Value[0] - '0')
+		case "oddVBand":
+			t.OddVBand = int(attr.Value[0] - '0')
+		case "evenVBand":
+			t.EvenVBand = int(attr.Value[0] - '0')
+		case "firstRowFirstColumn":
+			t.FirstRowFirstCol = int(attr.Value[0] - '0')
+		case "firstRowLastColumn":
+			t.FirstRowLastCol = int(attr.Value[0] - '0')
+		case "lastRowFirstColumn":
+			t.LastRowFirstCol = int(attr.Value[0] - '0')
+		case "lastRowLastColumn":
+			t.LastRowLastCol = int(attr.Value[0] - '0')
+		default:
+			// ignore other attributes
+		}
+	}
+	// Consume the end element
+	_, err := d.Token()
+	return err
 }
 
 // WTableRowHeight represents the height of a row within a table.
@@ -551,10 +723,10 @@ type WTableRowHeight struct {
 
 // WTableCell represents a cell within a table.
 type WTableCell struct {
-	XMLName             xml.Name `xml:"w:tc,omitempty"`
-	TableCellProperties *WTableCellProperties
-	Paragraphs          []*Paragraph `xml:"w:p,omitempty"`
-	Tables              []*Table     `xml:"w:tbl,omitempty"`
+	XMLName    xml.Name `xml:"w:tc,omitempty"`
+	Properties *WTableCellProperties
+	Paragraphs []*Paragraph `xml:"w:p,omitempty"`
+	Tables     []*Table     `xml:"w:tbl,omitempty"`
 
 	file *Docx
 }
@@ -570,6 +742,10 @@ func (c *WTableCell) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 			return err
 		}
 
+		if c.Properties == nil {
+			c.Properties = &WTableCellProperties{}
+		}
+
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "p":
@@ -581,12 +757,10 @@ func (c *WTableCell) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				}
 				c.Paragraphs = append(c.Paragraphs, &value)
 			case "tcPr":
-				var value WTableCellProperties
-				err = d.DecodeElement(&value, &tt)
+				err = d.DecodeElement(c.Properties, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
-				c.TableCellProperties = &value
 			case "tbl":
 				var table Table
 				table.file = c.file
@@ -608,13 +782,24 @@ func (c *WTableCell) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 
 // WTableCellProperties represents the properties of a table cell.
 type WTableCellProperties struct {
-	XMLName        xml.Name `xml:"w:tcPr,omitempty"`
-	TableCellWidth *WTableCellWidth
-	VMerge         *WvMerge
-	GridSpan       *WGridSpan
-	TableBorders   *WTableBorders `xml:"w:tcBorders"`
-	Shade          *Shade
-	VAlign         *WVerticalAlignment
+	XMLName      xml.Name `xml:"w:tcPr,omitempty"`
+	ConfStyle    *WTableConfStyle
+	Width        *WTableCellWidth
+	VMerge       *WvMerge
+	GridSpan     *WGridSpan
+	TableBorders *WTableBorders `xml:"w:tcBorders"`
+	Shade        *Shade
+	VAlign       *WVerticalAlignment
+}
+
+// MarshalXML ...
+func (t *WTableCellProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if t.ConfStyle == nil && t.Width == nil && t.VMerge == nil && t.GridSpan == nil &&
+		t.TableBorders == nil && t.Shade == nil && t.VAlign == nil {
+		return nil
+	}
+	type _t WTableCellProperties
+	return e.Encode((*_t)(t))
 }
 
 // UnmarshalXML ...
@@ -631,16 +816,16 @@ func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) 
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "tcW":
-				r.TableCellWidth = new(WTableCellWidth)
+				r.Width = new(WTableCellWidth)
 				v := getAtt(tt.Attr, "w")
 				if v == "" {
 					continue
 				}
-				r.TableCellWidth.W, err = GetInt64(v)
+				r.Width.W, err = GetInt64(v)
 				if err != nil {
 					return err
 				}
-				r.TableCellWidth.Type = getAtt(tt.Attr, "type")
+				r.Width.Type = getAtt(tt.Attr, "type")
 			case "vMerge":
 				r.VMerge = &WvMerge{Val: getAtt(tt.Attr, "val")}
 			case "gridSpan":
@@ -669,6 +854,12 @@ func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) 
 					return err
 				}
 				r.Shade = &value
+			case "confStyle":
+				r.ConfStyle = new(WTableConfStyle)
+				err = d.DecodeElement(r.ConfStyle, &tt)
+				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+					return err
+				}
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -681,18 +872,38 @@ func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) 
 	return nil
 }
 
-// WTableCellWidth represents the width of a table cell.
+// WTableCellWidth represents the width of a cell in a table.
+// Type:
 //
-// 在w:tcW元素中，type属性可以有以下几种取值：
-//
-//	"auto"：表示表格列宽度由文本或表格布局决定。
-//	"dxa"：表示表格列宽度使用磅为单位。
-//
-// 不同的取值对应着不同的宽度计量单位和宽度定义方式。
+//	"auto"： by content
+//	"dxa"： in Point
 type WTableCellWidth struct {
 	XMLName xml.Name `xml:"w:tcW,omitempty"`
 	W       int64    `xml:"w:w,attr"`
 	Type    string   `xml:"w:type,attr"`
+}
+
+// UnmarshalXML ...
+func (t *WTableCellWidth) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
+	for _, attr := range start.Attr {
+		if attr.Value == "" {
+			continue
+		}
+		switch attr.Name.Local {
+		case "w":
+			t.W, err = GetInt64(attr.Value)
+			if err != nil {
+				return err
+			}
+		case "type":
+			t.Type = attr.Value
+		default:
+			// ignore other attributes
+		}
+	}
+	// Consume the end element
+	_, err = d.Token()
+	return err
 }
 
 // WvMerge element is used to specify whether a table cell

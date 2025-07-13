@@ -46,6 +46,8 @@ type ParagraphProperties struct {
 	OverflowPunct  *OverflowPunct
 
 	RunProperties *RunProperties
+
+	ConfStyle *WTableConfStyle
 }
 
 // UnmarshalXML ...
