@@ -63,14 +63,22 @@ func (r *Run) Spacing(line int) *Run {
 }
 
 // Bold ...
-func (r *Run) Bold() *Run {
-	r.RunProperties.Bold = &Bold{}
+func (r *Run) Bold(val bool) *Run {
+	if val {
+		r.RunProperties.Bold = &Bold{}
+	} else {
+		r.RunProperties.Bold = nil
+	}
 	return r
 }
 
 // Italic ...
-func (r *Run) Italic() *Run {
-	r.RunProperties.Italic = &Italic{}
+func (r *Run) Italic(val bool) *Run {
+	if val {
+		r.RunProperties.Italic = &Italic{}
+	} else {
+		r.RunProperties.Italic = nil
+	}
 	return r
 }
 
@@ -90,6 +98,15 @@ func (r *Run) Italic() *Run {
 //	wavyDouble: Specifies a double wavy underline.
 func (r *Run) Underline(val string) *Run {
 	r.RunProperties.Underline = &Underline{Val: val}
+	return r
+}
+
+func (r *Run) UnderlineSingle(val bool) *Run {
+	if val {
+		r.RunProperties.Underline = &Underline{Val: "single"}
+	} else {
+		r.RunProperties.Underline = nil
+	}
 	return r
 }
 
