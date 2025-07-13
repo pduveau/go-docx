@@ -3,6 +3,7 @@
    Copyright (c) 2021 Gonzalo Fernandez-Victorio
    Copyright (c) 2021 Basement Crowd Ltd (https://www.basementcrowd.com)
    Copyright (c) 2023 Fumiama Minamoto (源文雨)
+   2025 Philippe Duveau
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published
@@ -392,7 +393,7 @@ func (t *WTableStyle) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err 
 //	"dxa"： in Point
 type WTableWidth struct {
 	XMLName xml.Name `xml:"w:tblW,omitempty"`
-	W       int64    `xml:"w:w,attr"`
+	W       int      `xml:"w:w,attr"`
 	Type    string   `xml:"w:type,attr"`
 }
 
@@ -404,7 +405,7 @@ func (t *WTableWidth) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err 
 		}
 		switch attr.Name.Local {
 		case "w":
-			t.W, err = GetInt64(attr.Value)
+			t.W, err = GetInt(attr.Value)
 			if err != nil {
 				return err
 			}
@@ -502,7 +503,7 @@ func (t *WTableGrid) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 // WGridCol is a structure that represents a table grid column of a Word document.
 type WGridCol struct {
 	XMLName xml.Name `xml:"w:gridCol,omitempty"`
-	W       int64    `xml:"w:w,attr"`
+	W       int      `xml:"w:w,attr"`
 }
 
 // UnmarshalXML ...
@@ -513,7 +514,7 @@ func (g *WGridCol) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err err
 		}
 		switch attr.Name.Local {
 		case "w":
-			g.W, err = GetInt64(attr.Value)
+			g.W, err = GetInt(attr.Value)
 			if err != nil {
 				return err
 			}
@@ -612,7 +613,7 @@ func (t *WTableRowProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) e
 				for _, attr := range tt.Attr {
 					switch attr.Name.Local {
 					case "val":
-						th.Val, err = GetInt64(attr.Value)
+						th.Val, err = GetInt(attr.Value)
 						if err != nil {
 							return err
 						}
@@ -718,7 +719,7 @@ func (t *WTableConfStyle) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 type WTableRowHeight struct {
 	XMLName xml.Name `xml:"w:trHeight,omitempty"`
 	Rule    string   `xml:"w:hRule,attr,omitempty"`
-	Val     int64    `xml:"w:val,attr"`
+	Val     int      `xml:"w:val,attr"`
 }
 
 // WTableCell represents a cell within a table.
@@ -821,7 +822,7 @@ func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) 
 				if v == "" {
 					continue
 				}
-				r.Width.W, err = GetInt64(v)
+				r.Width.W, err = GetInt(v)
 				if err != nil {
 					return err
 				}
@@ -879,7 +880,7 @@ func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) 
 //	"dxa"： in Point
 type WTableCellWidth struct {
 	XMLName xml.Name `xml:"w:tcW,omitempty"`
-	W       int64    `xml:"w:w,attr"`
+	W       int      `xml:"w:w,attr"`
 	Type    string   `xml:"w:type,attr"`
 }
 
@@ -891,7 +892,7 @@ func (t *WTableCellWidth) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (
 		}
 		switch attr.Name.Local {
 		case "w":
-			t.W, err = GetInt64(attr.Value)
+			t.W, err = GetInt(attr.Value)
 			if err != nil {
 				return err
 			}

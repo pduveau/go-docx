@@ -33,7 +33,7 @@ import (
 func (f *Docx) AddTable(
 	row int,
 	col int,
-	tableWidth int64,
+	tableWidth int,
 	borderColors *APITableBorderColors,
 ) *Table {
 	trs := make([]*WTableRow, row)
@@ -97,14 +97,14 @@ func (f *Docx) AddTableEmpty() *Table {
 //
 // unit: twips (1/20 point)
 func (f *Docx) AddTableTwips(
-	rowHeights []int64,
-	colWidths []int64,
-	tableWidth int64,
+	rowHeights []int,
+	colWidths []int,
+	tableWidth int,
 	borderColors *APITableBorderColors,
 ) *Table {
 	grids := make([]*WGridCol, len(colWidths))
 	trs := make([]*WTableRow, len(rowHeights))
-	var total int64 = 0
+	var total int = 0
 	for i, w := range colWidths {
 		if w > 0 {
 			total += w
@@ -209,7 +209,7 @@ func (t *Table) Borders(which t_TABLE_BORDER, border, color string, size, space 
 }
 
 // Width allows to set width of the table
-func (t *Table) Width(w int64) *Table {
+func (t *Table) Width(w int) *Table {
 	typ := "auto"
 	if w > 0 {
 		typ = "dxa"
@@ -316,9 +316,9 @@ func (t *Table) Style(style string, option t_TABLE_STYLE_OPTION) *Table {
 // ColGrid allows to set cols width
 // length of w must be equals to the highest number of columns in the rows of the table
 // Any Merge must be applied before in order to be taken into account
-func (t *Table) ColGrid(w []int64) *Table {
+func (t *Table) ColGrid(w []int) *Table {
 	var g []*WGridCol = make([]*WGridCol, len(w))
-	var total int64 = 0
+	var total int = 0
 
 	for i, v := range w {
 		total += v
@@ -486,7 +486,7 @@ func (c *WTableCell) Shade(val, color, fill string) *WTableCell {
 }
 
 // Width allows to set width of the cell
-func (c *WTableCell) Width(w int64) *WTableCell {
+func (c *WTableCell) Width(w int) *WTableCell {
 	typ := "auto"
 	if w > 0 {
 		typ = "dxa"
