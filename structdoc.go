@@ -153,6 +153,16 @@ func (b *Body) DropDrawingOf(name string) {
 	}
 }
 
+type _justification string
+
+const ( //	w:jc possible values：
+	JUSTIFICATION_RIGHT      _justification = "start"
+	JUSTIFICATION_CENTER     _justification = "center"
+	JUSTIFICATION_LEFT       _justification = "end"
+	JUSTIFICATION_JUSTIFIED  _justification = "both"       // justify
+	JUSTIFICATION_DISTRIBUTE _justification = "distribute" // disperse Alignment
+)
+
 // Document <w:document>
 type Document struct {
 	XMLName xml.Name `xml:"w:document"`

@@ -217,6 +217,8 @@ type RunProperties struct {
 	Underline *Underline
 	VertAlign *VertAlign
 	Strike    *Strike
+	Lang      *Lang
+	NoProof   *NoProof
 }
 
 // UnmarshalXML ...
@@ -306,6 +308,14 @@ func (r *RunProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				var value Strike
 				value.Val = getAtt(tt.Attr, "val")
 				r.Strike = &value
+			case "lang":
+				var value Lang
+				value.Val = getAtt(tt.Attr, "val")
+				r.Lang = &value
+			case "noProof":
+				var value Lang
+				value.Val = getAtt(tt.Attr, "val")
+				r.Lang = &value
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -323,7 +333,7 @@ func (t *RunProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error
 	if t.Fonts == nil && t.Bold == nil && t.ICs == nil && t.Italic == nil && t.Highlight == nil &&
 		t.Color == nil && t.Size == nil && t.SizeCs == nil && t.Spacing == nil && t.RunStyle == nil &&
 		t.Style == nil && t.Shade == nil && t.Kern == nil && t.Underline == nil && t.VertAlign == nil &&
-		t.Strike == nil {
+		t.Strike == nil && t.Lang == nil && t.NoProof == nil {
 		return nil
 	}
 	type _t RunProperties

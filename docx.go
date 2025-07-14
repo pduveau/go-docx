@@ -144,7 +144,7 @@ func LoadBodyItems(items []interface{}, media []Media) *Docx {
 	for i, m := range media {
 		doc.mediaNameIdx[m.Name] = i
 	}
-	doc.slowIDs["图片"] = uintptr(len(media) + 1)
+	doc.slowIDs["picture"] = uintptr(len(media) + 1)
 	return doc
 }
 
@@ -156,7 +156,31 @@ func (f *Docx) WriteTo(writer io.Writer) (_ int64, err error) {
 	return 0, f.pack(zipWriter)
 }
 
-// Read is a fake function and cannot be used
-func (f *Docx) Read(_ []byte) (int, error) {
-	return 0, os.ErrInvalid
+// ReadDocument allow to load a document as a template to append
+func ReadDocument(path string) (doc *Docx, err error) {
+	var f *os.File
+	var fi fs.FileInfo
+
+	f, err = os.Open(path)
+	if err != nil {
+		return
+	}
+
+	fi, err = f.Stat()
+	if err != nil {
+		return
+	}
+	doc, err = Parse(f, int64(fi.Size()))
+	return
+}
+
+func (d *Docx) ClearDoc() {
+	for _, i := range d.Document.Body.Items {
+		switch s := i.(type) {
+		case *SectPr:
+			d.Document.Body.Items = make([]interface{}, 1)
+			d.Document.Body.Items[0] = s
+			return
+		}
+	}
 }

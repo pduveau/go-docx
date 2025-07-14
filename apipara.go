@@ -41,18 +41,11 @@ func (c *WTableCell) AddParagraph() *Paragraph {
 }
 
 // Justification allows to set para's horizonal alignment
-//
-//	w:jc 属性的取值可以是以下之一：
-//		start：左对齐。
-//		center：居中对齐。
-//		end：右对齐。
-//		both：两端对齐。
-//		distribute：分散对齐。
-func (p *Paragraph) Justification(val string) *Paragraph {
+func (p *Paragraph) Justification(val _justification) *Paragraph {
 	if p.Properties == nil {
 		p.Properties = &ParagraphProperties{}
 	}
-	p.Properties.Justification = &Justification{Val: val}
+	p.Properties.Justification = &Justification{Val: (string)(val)}
 	return p
 }
 
@@ -125,5 +118,47 @@ func (p *Paragraph) NumSize(size string) *Paragraph {
 		p.Properties.RunProperties = &RunProperties{}
 	}
 	p.Properties.RunProperties.Size = &Size{Val: size}
+	return p
+}
+
+// LangCheck set the language parameter
+// if a parameter is a string it will be used as the language
+// if a parameter is a boolean it will be used to set the check (true) or nocheck (false)
+// the two parameter can be provide together
+func (p *Paragraph) LangCheck(check ...any) *Paragraph {
+	if p.Properties == nil {
+		p.Properties = &ParagraphProperties{}
+	}
+	if p.Properties.RunProperties == nil {
+		p.Properties.RunProperties = &RunProperties{}
+	}
+
+	proof := true
+	lang := ""
+	for _, c := range check {
+		switch v := c.(type) {
+		case bool:
+			proof = v
+		case string:
+			lang = v
+		}
+	}
+	if lang != "" {
+		p.Properties.RunProperties.Lang = &Lang{Val: lang}
+	} else {
+		p.Properties.RunProperties.Lang = nil
+	}
+	if proof {
+		p.Properties.RunProperties.NoProof = nil
+	} else {
+		p.Properties.RunProperties.NoProof = &NoProof{}
+	}
+
+	for _, child := range p.Children {
+		switch r := child.(type) {
+		case *Run:
+			r.LangCheck(check...)
+		}
+	}
 	return p
 }

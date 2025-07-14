@@ -63,8 +63,8 @@ func (r *Run) Spacing(line int) *Run {
 }
 
 // Bold ...
-func (r *Run) Bold(val bool) *Run {
-	if val {
+func (r *Run) Bold(val ...bool) *Run {
+	if len(val) == 0 || val[0] {
 		r.RunProperties.Bold = &Bold{}
 	} else {
 		r.RunProperties.Bold = nil
@@ -73,8 +73,8 @@ func (r *Run) Bold(val bool) *Run {
 }
 
 // Italic ...
-func (r *Run) Italic(val bool) *Run {
-	if val {
+func (r *Run) Italic(val ...bool) *Run {
+	if len(val) == 0 || val[0] {
 		r.RunProperties.Italic = &Italic{}
 	} else {
 		r.RunProperties.Italic = nil
@@ -82,27 +82,32 @@ func (r *Run) Italic(val bool) *Run {
 	return r
 }
 
+type _underline string
+
+const (
+	UNDERLINE_NONE       _underline = "none"       // Specifies that no underline should be applied.
+	UNDERLINE_SINGLE     _underline = "single"     // Specifies a single underline.
+	UNDERLINE_WORDS      _underline = "words"      // Specifies that only words within the text should be underlined.
+	UNDERLINE_DOUBLE     _underline = "double"     // Specifies a double underline.
+	UNDERLINE_THICK      _underline = "thick"      // Specifies a thick underline.
+	UNDERLINE_DOTTED     _underline = "dotted"     // Specifies a dotted underline.
+	UNDERLINE_DASH       _underline = "dash"       // Specifies a dash underline.
+	UNDERLINE_DOTDASH    _underline = "dotDash"    // Specifies an alternating dot-dash underline.
+	UNDERLINE_DOTDOTDASH _underline = "dotDotDash" // Specifies an alternating dot-dot-dash underline.
+	UNDERLINE_WAVE       _underline = "wave"       // Specifies a wavy underline.
+	UNDERLINE_DASHLONG   _underline = "dashLong"   // Specifies a long dash underline.
+	UNDERLINE_WAVYDOUBLE _underline = "wavyDouble" // Specifies a double wavy underline.
+
+)
+
 // Underline has several possible values including
-//
-//	none: Specifies that no underline should be applied.
-//	single: Specifies a single underline.
-//	words: Specifies that only words within the text should be underlined.
-//	double: Specifies a double underline.
-//	thick: Specifies a thick underline.
-//	dotted: Specifies a dotted underline.
-//	dash: Specifies a dash underline.
-//	dotDash: Specifies an alternating dot-dash underline.
-//	dotDotDash: Specifies an alternating dot-dot-dash underline.
-//	wave: Specifies a wavy underline.
-//	dashLong: Specifies a long dash underline.
-//	wavyDouble: Specifies a double wavy underline.
-func (r *Run) Underline(val string) *Run {
-	r.RunProperties.Underline = &Underline{Val: val}
+func (r *Run) Underline(val _underline) *Run {
+	r.RunProperties.Underline = &Underline{Val: (string)(val)}
 	return r
 }
 
-func (r *Run) UnderlineSingle(val bool) *Run {
-	if val {
+func (r *Run) UnderlineSingle(val ...bool) *Run {
+	if len(val) == 0 || val[0] {
 		r.RunProperties.Underline = &Underline{Val: "single"}
 	} else {
 		r.RunProperties.Underline = nil
@@ -117,9 +122,9 @@ func (r *Run) Highlight(val string) *Run {
 }
 
 // Strike ...
-func (r *Run) Strike(val bool) *Run {
+func (r *Run) Strike(val ...bool) *Run {
 	trueFalseStr := "false"
-	if val {
+	if len(val) == 0 || val[0] {
 		trueFalseStr = "true"
 	}
 	r.RunProperties.Strike = &Strike{Val: trueFalseStr}
@@ -141,4 +146,31 @@ func (r *Run) Font(ascii, eastAsia, hansi, hint string) *Run {
 		Hint:     hint,
 	}
 	return r
+}
+
+// LangCheck set the language parameter
+// if a parameter is a string it will be used as the language
+// if a parameter is a boolean it will be used to set the check (true) or nocheck (false)
+// the two parameter can be provide together
+func (r *Run) LangCheck(check ...any) {
+	proof := true
+	lang := ""
+	for _, c := range check {
+		switch v := c.(type) {
+		case bool:
+			proof = v
+		case string:
+			lang = v
+		}
+	}
+	if lang != "" {
+		r.RunProperties.Lang = &Lang{Val: lang}
+	} else {
+		r.RunProperties.Lang = nil
+	}
+	if proof {
+		r.RunProperties.NoProof = nil
+	} else {
+		r.RunProperties.NoProof = &NoProof{}
+	}
 }

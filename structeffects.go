@@ -116,6 +116,17 @@ type Strike struct {
 	Val     string   `xml:"w:val,attr"`
 }
 
+// Lang ...
+type Lang struct {
+	XMLName xml.Name `xml:"w:lang,omitempty"`
+	Val     string   `xml:"w:val,attr"`
+}
+
+// Lang ...
+type NoProof struct {
+	XMLName xml.Name `xml:"w:noProof,omitempty"`
+}
+
 // Shade is an element that represents a shading pattern applied to a document element.
 type Shade struct {
 	XMLName       xml.Name `xml:"w:shd,omitempty"`

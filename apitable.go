@@ -23,7 +23,6 @@ package docx
 
 import (
 	"fmt"
-	"reflect"
 	"slices"
 )
 
@@ -34,30 +33,7 @@ func (f *Docx) AddTable(
 	row int,
 	col int,
 	tableWidth int,
-	borderColors *APITableBorderColors,
 ) *Table {
-	trs := make([]*WTableRow, row)
-	for i := 0; i < row; i++ {
-		cells := make([]*WTableCell, col)
-		for i := range cells {
-			cells[i] = &WTableCell{
-				Properties: &WTableCellProperties{
-					Width: &WTableCellWidth{Type: "auto"},
-				},
-				file: f,
-			}
-		}
-		trs[i] = &WTableRow{
-			Properties: &WTableRowProperties{},
-			Cells:      cells,
-		}
-	}
-
-	if borderColors == nil {
-		borderColors = new(APITableBorderColors)
-	}
-	borderColors.applyDefault()
-
 	tbl := &Table{
 		Properties: &WTableProperties{
 			Look: &WTableLook{
@@ -65,7 +41,24 @@ func (f *Docx) AddTable(
 			},
 		},
 		Grid: &WTableGrid{},
-		Rows: trs,
+		Rows: make([]*WTableRow, row),
+	}
+
+	for i := range tbl.Rows {
+		tbl.Rows[i] = &WTableRow{
+			Properties: &WTableRowProperties{},
+			Cells:      make([]*WTableCell, col),
+			table:      tbl,
+		}
+		for j := range tbl.Rows[i].Cells {
+			tbl.Rows[i].Cells[j] = &WTableCell{
+				Properties: &WTableCellProperties{
+					Width: &WTableCellWidth{Type: "auto"},
+				},
+				file: f,
+				row:  tbl.Rows[i],
+			}
+		}
 	}
 
 	tbl.Width(tableWidth)
@@ -100,15 +93,24 @@ func (f *Docx) AddTableTwips(
 	rowHeights []int,
 	colWidths []int,
 	tableWidth int,
-	borderColors *APITableBorderColors,
 ) *Table {
-	grids := make([]*WGridCol, len(colWidths))
-	trs := make([]*WTableRow, len(rowHeights))
+	tbl := &Table{
+		Properties: &WTableProperties{
+			Look: &WTableLook{
+				Val: "0000",
+			},
+		},
+		Grid: &WTableGrid{
+			GridCols: make([]*WGridCol, len(colWidths)),
+		},
+		Rows: make([]*WTableRow, len(rowHeights)),
+	}
+
 	var total int = 0
 	for i, w := range colWidths {
 		if w > 0 {
 			total += w
-			grids[i] = &WGridCol{
+			tbl.Grid.GridCols[i] = &WGridCol{
 				W: w,
 			}
 		}
@@ -118,41 +120,24 @@ func (f *Docx) AddTableTwips(
 	}
 
 	for i, h := range rowHeights {
-		cells := make([]*WTableCell, len(colWidths))
-		for i, w := range colWidths {
-			cells[i] = &WTableCell{
+		tbl.Rows[i] = &WTableRow{
+			Properties: &WTableRowProperties{},
+			Cells:      make([]*WTableCell, len(colWidths)),
+		}
+		for j, w := range colWidths {
+			tbl.Rows[i].Cells[j] = &WTableCell{
 				Properties: &WTableCellProperties{
 					Width: &WTableCellWidth{W: w, Type: "dxa"},
 				},
+				row:  tbl.Rows[i],
 				file: f,
 			}
 		}
-		trs[i] = &WTableRow{
-			Properties: &WTableRowProperties{},
-			Cells:      cells,
-		}
 		if h > 0 {
-			trs[i].Properties.Height = &WTableRowHeight{
+			tbl.Rows[i].Properties.Height = &WTableRowHeight{
 				Val: h,
 			}
 		}
-	}
-
-	if borderColors == nil {
-		borderColors = new(APITableBorderColors)
-	}
-	borderColors.applyDefault()
-
-	tbl := &Table{
-		Properties: &WTableProperties{
-			Look: &WTableLook{
-				Val: "0000",
-			},
-		},
-		Grid: &WTableGrid{
-			GridCols: grids,
-		},
-		Rows: trs,
 	}
 
 	tbl.Style("TableGrid", 0)
@@ -314,8 +299,9 @@ func (t *Table) Style(style string, option t_TABLE_STYLE_OPTION) *Table {
 }
 
 // ColGrid allows to set cols width
-// length of w must be equals to the highest number of columns in the rows of the table
-// Any Merge must be applied before in order to be taken into account
+// length of w should be equals to the highest number of columns in the rows of the table
+// Warning:
+// - To avoid Microsoft Word potential warning, apply this when the table is fully defined (and merged)
 func (t *Table) ColGrid(w []int) *Table {
 	var g []*WGridCol = make([]*WGridCol, len(w))
 	var total int = 0
@@ -338,7 +324,7 @@ func (t *Table) ColGrid(w []int) *Table {
 		for _, c := range t.Rows[j].Cells {
 			if i < lw {
 				v := w[i]
-				if c.Properties != nil && c.Properties.GridSpan != nil {
+				if c.Properties.GridSpan != nil {
 					s := i + c.Properties.GridSpan.Val
 					for v = 0; i < lw && i < s; i++ {
 						v += w[i]
@@ -354,90 +340,32 @@ func (t *Table) ColGrid(w []int) *Table {
 	return t
 }
 
-// Justification allows to set table's horizonal alignment
+// Merge allows to merge a cells rectangle in the table
+// All parameters are indexes in the table Arrays
 //
-//	w:jc possible values：
-//		start
-//		center
-//		end
-//		both： justify
-//		distribute： disperse Alignment
-func (t *Table) Justification(val string) *Table {
-	if t.Properties.Justification == nil {
-		t.Properties.Justification = &Justification{Val: val}
-		return t
-	}
-	t.Properties.Justification.Val = val
-	return t
-}
-
-// Append/Insert a row in a table
-// append if position is < 0
-func (t *Table) AddRow(position int) *WTableRow {
-	v := &WTableRow{
-		Properties: &WTableRowProperties{},
-	}
-	if t.Rows != nil && position >= 0 && position < len(t.Rows) {
-		t.Rows = slices.Insert(t.Rows, position, v)
-	} else {
-		t.Rows = append(t.Rows, v)
-	}
-	return v
-}
-
-// Justification allows to set table's horizonal alignment
-//
-//	w:jc possible values：
-//		start
-//		center
-//		end
-//		both： justify
-//		distribute： disperse Alignment
-func (w *WTableRow) Justification(val string) *WTableRow {
-	if w.Properties.Justification == nil {
-		w.Properties.Justification = &Justification{Val: val}
-		return w
-	}
-	w.Properties.Justification.Val = val
-	return w
-}
-
-// Append/Insert a cell in a table row
-// append if position is < 0
-func (r *WTableRow) AddCell(position int) *WTableCell {
-	v := &WTableCell{
-		Properties: &WTableCellProperties{},
-	}
-	if r.Cells != nil && position >= 0 && position < len(r.Cells) {
-		r.Cells = slices.Insert(r.Cells, position, v)
-	} else {
-		r.Cells = append(r.Cells, v)
-	}
-	return v
-}
-
-// Merge allows to merge a cells rectangle in th table
-// Do not apply Merge and table style with vertical band together. The result is unknown
-// Do not insert row or cell in a merged aera. The result is unknown
-func (t *Table) Merge(firstRow, firstCol, lastRow, lastCol int) *Table {
-	if t.Rows != nil && 0 <= firstRow && firstRow < lastRow && lastRow < len(t.Rows) && 0 <= firstCol && firstCol < lastCol {
-		starts := make([]int, 0)
-		ends := make([]int, 0)
+// Warnings:
+// - only apply merge when rows and cells are existing and definitive
+// - merging a rectangle that overlap another merge will not be applied
+func (t *Table) Merge(firstRow, lastRow, firstCol, lastCol int) *Table {
+	if t.Rows != nil && 0 <= firstRow && lastRow < len(t.Rows) && 0 <= firstCol &&
+		((firstRow <= lastRow && firstCol < lastCol) || (firstRow < lastRow && firstCol <= lastCol)) {
+		starts := make([]int, firstRow)
+		ends := make([]int, firstRow)
 		for i := firstRow; i <= lastRow; i++ {
 			cols := 0
 			start := -1
 			end := -1
 			for k, a := range t.Rows[i].Cells {
-				if a.Properties != nil && a.Properties.GridSpan != nil {
-					cols += a.Properties.GridSpan.Val
-				} else {
-					cols++
-				}
 				if cols == firstCol {
 					start = k
 				}
 				if cols == lastCol {
 					end = k + 1
+				}
+				if a.Properties.GridSpan != nil {
+					cols += a.Properties.GridSpan.Val
+				} else {
+					cols++
 				}
 			}
 			if end == -1 || start == -1 {
@@ -451,13 +379,26 @@ func (t *Table) Merge(firstRow, firstCol, lastRow, lastCol int) *Table {
 		// everything is fine then apply
 		for i := firstRow; i <= lastRow; i++ {
 			r := t.Rows[i]
-			p := r.Cells[starts[i-firstRow]].Properties
-			if starts[i-firstRow] < ends[i-firstRow] {
+			p := r.Cells[starts[i]].Properties
+			if starts[i] < ends[i] {
+				w := 0
+				for _, c := range r.Cells[starts[i]:ends[i]] {
+					if c.Properties.Width != nil {
+						switch c.Properties.Width.Type {
+						case "auto":
+							w = -1
+							break
+						case "dxa":
+							w += c.Properties.Width.W
+						}
+					}
+				}
+				r.Cells[starts[i]].Width(w)
 				// merge horizontally
-				if ends[i-firstRow] == len(r.Cells) {
-					r.Cells = r.Cells[:starts[i-firstRow]+1]
+				if ends[i] == len(r.Cells) {
+					r.Cells = r.Cells[:starts[i]+1]
 				} else {
-					r.Cells = append(r.Cells[:starts[i-firstRow]+1], r.Cells[:ends[i-firstRow]]...)
+					r.Cells = append(r.Cells[:starts[i]+1], r.Cells[ends[i]:]...)
 				}
 				p.GridSpan = &WGridSpan{
 					Val: lastCol - firstCol + 1,
@@ -473,6 +414,95 @@ func (t *Table) Merge(firstRow, firstCol, lastRow, lastCol int) *Table {
 		}
 	}
 	return t
+}
+
+// Justification allows to set table's horizonal alignment
+func (t *Table) Justification(val _justification) *Table {
+	if t.Properties.Justification == nil {
+		t.Properties.Justification = &Justification{}
+	}
+	t.Properties.Justification.Val = (string)(val)
+	return t
+}
+
+// Append/Insert a row in a table
+// parameter position is used to insert the row or append if not provided or position is < 0
+func (t *Table) AddRow(position ...int) *WTableRow {
+	v := &WTableRow{
+		Properties: &WTableRowProperties{},
+		Cells:      make([]*WTableCell, 0),
+	}
+	if len(position) > 0 && position[0] >= 0 && position[0] < len(t.Rows) {
+		t.Rows = slices.Insert(t.Rows, position[0], v)
+	} else {
+		t.Rows = append(t.Rows, v)
+	}
+	return v
+}
+
+// Justification allows to set table's horizonal alignment
+func (w *WTableRow) Justification(val _justification) *WTableRow {
+	if w.Properties.Justification == nil {
+		w.Properties.Justification = &Justification{}
+	}
+	w.Properties.Justification.Val = (string)(val)
+	return w
+}
+
+// Append/Insert a cell in a table row
+// Takes until two parameters
+//   - first: insert at in the row cells array or append if not provided, >= len of cells array or < 0
+//   - second: span over the provided number of columns (1 = no span)
+func (r *WTableRow) AddCell(position_span ...int) *WTableCell {
+	c := &WTableCell{
+		Properties: &WTableCellProperties{
+			Width: &WTableCellWidth{
+				Type: "auto",
+			},
+		},
+		row: r,
+	}
+
+	switch len(position_span) {
+	default:
+		if position_span[1] > 1 {
+			c.Properties.GridSpan = &WGridSpan{
+				Val: position_span[1],
+			}
+		}
+		fallthrough
+	case 1:
+		if position_span[0] >= 0 && position_span[0] < len(r.Cells) {
+			r.Cells = slices.Insert(r.Cells, position_span[0], c)
+			return c
+		}
+		fallthrough
+	case 0:
+		r.Cells = append(r.Cells, c)
+	}
+	return c
+}
+
+// Width allows to set width of the table
+func (c *WTableCell) Borders(which t_TABLE_BORDER, border, color string, size, space int) *WTableCell {
+	if c.Properties.Borders == nil {
+		c.Properties.Borders = &WTableCellBorders{}
+	}
+	g := c.Properties.Borders
+	b := &WTableBorder{Val: border, Size: size, Space: space, Color: color}
+	for _, f := range v_border_list {
+		switch which & f {
+		case TABLE_BORDER_TOP:
+			g.Top = b
+		case TABLE_BORDER_LEFT:
+			g.Left = b
+		case TABLE_BORDER_BOTTOM:
+			g.Bottom = b
+		case TABLE_BORDER_RIGHT:
+			g.Right = b
+		}
+	}
+	return c
 }
 
 // Shade allows to set cell's shade
@@ -498,22 +528,17 @@ func (c *WTableCell) Width(w int) *WTableCell {
 	return c
 }
 
-// APITableBorderColors customizable param
-type APITableBorderColors struct {
-	Top     string
-	Left    string
-	Bottom  string
-	Right   string
-	InsideH string
-	InsideV string
-}
+type _valign string
 
-func (tbc *APITableBorderColors) applyDefault() {
-	tbcR := reflect.ValueOf(tbc).Elem()
+const (
+	TABLE_VALIGN_TOP    _valign = "top"
+	TABLE_VALIGN_CENTER _valign = "center"
+	TABLE_VALIGN_BOTTOM _valign = "bottom"
+)
 
-	for i := 0; i < tbcR.NumField(); i++ {
-		if tbcR.Field(i).IsZero() {
-			tbcR.Field(i).SetString("#000000")
-		}
+func (c *WTableCell) VAlign(val _valign) *WTableCell {
+	c.Properties.VAlign = &WVerticalAlignment{
+		Val: (string)(val),
 	}
+	return c
 }

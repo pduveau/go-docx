@@ -195,6 +195,9 @@ func (t *Table) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 					return err
 				}
 				t.Rows = append(t.Rows, &value)
+				for _, r := range t.Rows {
+					r.table = t
+				}
 			case "tblPr":
 				t.Properties = new(WTableProperties)
 				err = d.DecodeElement(t.Properties, &tt)
@@ -533,7 +536,8 @@ type WTableRow struct {
 	Properties *WTableRowProperties
 	Cells      []*WTableCell
 
-	file *Docx
+	file  *Docx
+	table *Table
 }
 
 // UnmarshalXML ...
@@ -566,6 +570,9 @@ func (w *WTableRow) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 					return err
 				}
 				w.Cells = append(w.Cells, &value)
+				for _, c := range w.Cells {
+					c.row = w
+				}
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -729,6 +736,7 @@ type WTableCell struct {
 	Paragraphs []*Paragraph `xml:"w:p,omitempty"`
 	Tables     []*Table     `xml:"w:tbl,omitempty"`
 
+	row  *WTableRow
 	file *Docx
 }
 
@@ -783,28 +791,28 @@ func (c *WTableCell) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 
 // WTableCellProperties represents the properties of a table cell.
 type WTableCellProperties struct {
-	XMLName      xml.Name `xml:"w:tcPr,omitempty"`
-	ConfStyle    *WTableConfStyle
-	Width        *WTableCellWidth
-	VMerge       *WvMerge
-	GridSpan     *WGridSpan
-	TableBorders *WTableBorders `xml:"w:tcBorders"`
-	Shade        *Shade
-	VAlign       *WVerticalAlignment
+	XMLName   xml.Name `xml:"w:tcPr,omitempty"`
+	ConfStyle *WTableConfStyle
+	Width     *WTableCellWidth
+	VMerge    *WvMerge
+	GridSpan  *WGridSpan
+	Borders   *WTableCellBorders `xml:"w:tcBorders"`
+	Shade     *Shade
+	VAlign    *WVerticalAlignment
 }
 
 // MarshalXML ...
-func (t *WTableCellProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if t.ConfStyle == nil && t.Width == nil && t.VMerge == nil && t.GridSpan == nil &&
-		t.TableBorders == nil && t.Shade == nil && t.VAlign == nil {
+func (p *WTableCellProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if p.ConfStyle == nil && p.Width == nil && p.VMerge == nil && p.GridSpan == nil &&
+		p.Borders == nil && p.Shade == nil && p.VAlign == nil {
 		return nil
 	}
 	type _t WTableCellProperties
-	return e.Encode((*_t)(t))
+	return e.Encode((*_t)(p))
 }
 
 // UnmarshalXML ...
-func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
+func (p *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 	for {
 		t, err := d.Token()
 		if err == io.EOF {
@@ -817,34 +825,34 @@ func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) 
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "tcW":
-				r.Width = new(WTableCellWidth)
+				p.Width = new(WTableCellWidth)
 				v := getAtt(tt.Attr, "w")
 				if v == "" {
 					continue
 				}
-				r.Width.W, err = GetInt(v)
+				p.Width.W, err = GetInt(v)
 				if err != nil {
 					return err
 				}
-				r.Width.Type = getAtt(tt.Attr, "type")
+				p.Width.Type = getAtt(tt.Attr, "type")
 			case "vMerge":
-				r.VMerge = &WvMerge{Val: getAtt(tt.Attr, "val")}
+				p.VMerge = &WvMerge{Val: getAtt(tt.Attr, "val")}
 			case "gridSpan":
-				r.GridSpan = new(WGridSpan)
+				p.GridSpan = new(WGridSpan)
 				v := getAtt(tt.Attr, "val")
 				if v == "" {
 					continue
 				}
-				r.GridSpan.Val, err = GetInt(v)
+				p.GridSpan.Val, err = GetInt(v)
 				if err != nil {
 					return err
 				}
 			case "vAlign":
-				r.VAlign = new(WVerticalAlignment)
-				r.VAlign.Val = getAtt(tt.Attr, "val")
+				p.VAlign = new(WVerticalAlignment)
+				p.VAlign.Val = getAtt(tt.Attr, "val")
 			case "tcBorders":
-				r.TableBorders = new(WTableBorders)
-				err = d.DecodeElement(r.TableBorders, &tt)
+				p.Borders = new(WTableCellBorders)
+				err = d.DecodeElement(p.Borders, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
@@ -854,10 +862,10 @@ func (r *WTableCellProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) 
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
-				r.Shade = &value
+				p.Shade = &value
 			case "confStyle":
-				r.ConfStyle = new(WTableConfStyle)
-				err = d.DecodeElement(r.ConfStyle, &tt)
+				p.ConfStyle = new(WTableConfStyle)
+				err = d.DecodeElement(p.ConfStyle, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
@@ -932,11 +940,63 @@ type WvMerge struct {
 }
 
 // WTableBorders is a structure representing the borders of a Word table.
+type WTableCellBorders struct {
+	Top    *WTableBorder `xml:"w:top,omitempty"`
+	Left   *WTableBorder `xml:"w:left,omitempty"`
+	Bottom *WTableBorder `xml:"w:bottom,omitempty"`
+	Right  *WTableBorder `xml:"w:right,omitempty"`
+}
+
+func UnmarhalXMLBorder(d *xml.Decoder, tt xml.StartElement) (*WTableBorder, error) {
+	value := &WTableBorder{}
+	err := d.DecodeElement(value, &tt)
+	if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+		return nil, err
+	}
+	return value, err
+}
+
+// UnmarshalXML ...
+func (w *WTableCellBorders) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
+	for {
+		t, err := d.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		if tt, ok := t.(xml.StartElement); ok {
+			var dest **WTableBorder
+			switch tt.Name.Local {
+			case "top":
+				dest = &(w.Top)
+			case "left":
+				dest = &(w.Left)
+			case "bottom":
+				dest = &(w.Bottom)
+			case "right":
+				dest = &(w.Right)
+			default:
+				err = d.Skip() // skip unsupported tags
+				if err != nil {
+					return err
+				}
+				continue
+			}
+			*dest, err = UnmarhalXMLBorder(d, tt)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// WTableBorders is a structure representing the borders of a Word table.
 type WTableBorders struct {
-	Top     *WTableBorder `xml:"w:top,omitempty"`
-	Left    *WTableBorder `xml:"w:left,omitempty"`
-	Bottom  *WTableBorder `xml:"w:bottom,omitempty"`
-	Right   *WTableBorder `xml:"w:right,omitempty"`
+	WTableCellBorders
 	InsideH *WTableBorder `xml:"w:insideH,omitempty"`
 	InsideV *WTableBorder `xml:"w:insideV,omitempty"`
 }
@@ -953,55 +1013,30 @@ func (w *WTableBorders) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 		}
 
 		if tt, ok := t.(xml.StartElement); ok {
+			var dest **WTableBorder
 			switch tt.Name.Local {
 			case "top":
-				value := new(WTableBorder)
-				err = d.DecodeElement(value, &tt)
-				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
-					return err
-				}
-				w.Top = value
+				dest = &(w.Top)
 			case "left":
-				value := new(WTableBorder)
-				err = d.DecodeElement(value, &tt)
-				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
-					return err
-				}
-				w.Left = value
+				dest = &(w.Left)
 			case "bottom":
-				value := new(WTableBorder)
-				err = d.DecodeElement(value, &tt)
-				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
-					return err
-				}
-				w.Bottom = value
+				dest = &(w.Bottom)
 			case "right":
-				value := new(WTableBorder)
-				err = d.DecodeElement(value, &tt)
-				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
-					return err
-				}
-				w.Right = value
+				dest = &(w.Right)
 			case "insideH":
-				value := new(WTableBorder)
-				err = d.DecodeElement(value, &tt)
-				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
-					return err
-				}
-				w.InsideH = value
+				dest = &(w.InsideH)
 			case "insideV":
-				value := new(WTableBorder)
-				err = d.DecodeElement(value, &tt)
-				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
-					return err
-				}
-				w.InsideV = value
+				dest = &(w.InsideV)
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
 					return err
 				}
 				continue
+			}
+			*dest, err = UnmarhalXMLBorder(d, tt)
+			if err != nil {
+				return err
 			}
 		}
 	}

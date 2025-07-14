@@ -62,6 +62,16 @@ func (p *Paragraph) AddText(text string) *Run {
 		RunProperties: &RunProperties{},
 		Children:      c,
 	}
+	if p.Properties != nil && p.Properties.RunProperties != nil {
+		if p.Properties.RunProperties.Lang != nil {
+			tmp := *(p.Properties.RunProperties.Lang)
+			run.RunProperties.Lang = &tmp
+		}
+		if p.Properties.RunProperties.NoProof != nil {
+			tmp := *(p.Properties.RunProperties.NoProof)
+			run.RunProperties.NoProof = &tmp
+		}
+	}
 	p.Children = append(p.Children, run)
 	return run
 }
