@@ -162,3 +162,59 @@ func (p *Paragraph) LangCheck(check ...any) *Paragraph {
 	}
 	return p
 }
+
+func (p *Paragraph) KeepLines(val ...bool) *Paragraph {
+	if len(val) == 0 || val[0] {
+		if p.Properties == nil {
+			p.Properties = &ParagraphProperties{}
+		}
+		p.Properties.KeepLines = &KeepLines{}
+	} else {
+		if p.Properties != nil {
+			p.Properties.KeepLines = nil
+		}
+	}
+	return p
+}
+
+func (p *Paragraph) KeepNext(val ...bool) *Paragraph {
+	if len(val) == 0 || val[0] {
+		if p.Properties == nil {
+			p.Properties = &ParagraphProperties{}
+		}
+		p.Properties.KeepNext = &KeepNext{}
+	} else {
+		if p.Properties != nil {
+			p.Properties.KeepNext = nil
+		}
+	}
+	return p
+}
+
+func (p *Paragraph) PageBreakBefore(val ...bool) *Paragraph {
+	if len(val) == 0 || val[0] {
+		if p.Properties == nil {
+			p.Properties = &ParagraphProperties{}
+		}
+		p.Properties.PageBreakBefore = &PageBreakBefore{}
+	} else {
+		if p.Properties != nil {
+			p.Properties.PageBreakBefore = nil
+		}
+	}
+	return p
+}
+
+func (p *Paragraph) SuppressAutoHyphens(val ...bool) *Paragraph {
+	if len(val) == 0 || val[0] {
+		if p.Properties == nil {
+			p.Properties = &ParagraphProperties{}
+		}
+		p.Properties.SuppressAutoHyphens = &SuppressAutoHyphens{}
+	} else {
+		if p.Properties != nil {
+			p.Properties.SuppressAutoHyphens = nil
+		}
+	}
+	return p
+}

@@ -30,24 +30,44 @@ import (
 
 // ParagraphProperties <w:pPr>
 type ParagraphProperties struct {
-	XMLName        xml.Name `xml:"w:pPr,omitempty"`
-	Tabs           *Tabs
-	Spacing        *Spacing
-	NumProperties  *NumProperties
-	Ind            *Ind
-	Justification  *Justification
-	Shade          *Shade
-	Kern           *Kern
-	Style          *Style
-	TextAlignment  *TextAlignment
-	AdjustRightInd *AdjustRightInd
-	SnapToGrid     *SnapToGrid
-	Kinsoku        *Kinsoku
-	OverflowPunct  *OverflowPunct
+	XMLName             xml.Name `xml:"w:pPr,omitempty"`
+	Tabs                *Tabs
+	Spacing             *Spacing
+	NumProperties       *NumProperties
+	Ind                 *Ind
+	Justification       *Justification
+	Shade               *Shade
+	Kern                *Kern
+	Style               *Style
+	TextAlignment       *TextAlignment
+	AdjustRightInd      *AdjustRightInd
+	SnapToGrid          *SnapToGrid
+	Kinsoku             *Kinsoku
+	OverflowPunct       *OverflowPunct
+	KeepNext            *KeepNext
+	KeepLines           *KeepLines
+	PageBreakBefore     *PageBreakBefore
+	SuppressAutoHyphens *SuppressAutoHyphens
 
 	RunProperties *RunProperties
 
 	ConfStyle *WTableConfStyle
+}
+
+type KeepNext struct {
+	XMLName xml.Name `xml:"w:keepNext,omitempty"`
+}
+
+type KeepLines struct {
+	XMLName xml.Name `xml:"w:keepLines,omitempty"`
+}
+
+type PageBreakBefore struct {
+	XMLName xml.Name `xml:"w:pageBreakBefore,omitempty"`
+}
+
+type SuppressAutoHyphens struct {
+	XMLName xml.Name `xml:"w:suppressAutoHyphens,omitempty"`
 }
 
 // UnmarshalXML ...
