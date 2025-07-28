@@ -292,7 +292,7 @@ func (r *WPInline) copymedia(to *Docx) *WPInline { //nolint: dupl
 			}
 			format := tgt[strings.LastIndex(tgt, ".")+1:]
 			idn := int(atomic.AddUintptr(&to.docID, 1))
-			id := int(to.IncreaseID("图片"))
+			id := int(to.IncreaseID("pictures"))
 			ids := strconv.Itoa(id)
 			m := r.file.Media(tgt[6:])
 			if m == nil {
@@ -312,12 +312,12 @@ func (r *WPInline) copymedia(to *Docx) *WPInline { //nolint: dupl
 
 			inln.DocPr = &WPDocPr{
 				ID:   idn,
-				Name: "图片 " + ids,
+				Name: r.file.pictures_prefix + ids,
 			}
 			pic.NonVisualPicProperties = &PICNonVisualPicProperties{
 				NonVisualDrawingProperties: NonVisualProperties{
 					ID:   id,
-					Name: "图片 " + ids,
+					Name: r.file.pictures_prefix + ids,
 				},
 				CNvPicPr: r.Graphic.GraphicData.Pic.NonVisualPicProperties.CNvPicPr,
 			}
@@ -1382,7 +1382,7 @@ func (r *WPAnchor) copymedia(to *Docx) *WPAnchor { //nolint: dupl
 			}
 			format := tgt[strings.LastIndex(tgt, ".")+1:]
 			idn := int(atomic.AddUintptr(&to.docID, 1))
-			id := int(to.IncreaseID("图片"))
+			id := int(to.IncreaseID("pictures"))
 			ids := strconv.Itoa(id)
 			m := r.file.Media(tgt[6:])
 			if m == nil {
@@ -1402,12 +1402,12 @@ func (r *WPAnchor) copymedia(to *Docx) *WPAnchor { //nolint: dupl
 
 			anch.DocPr = &WPDocPr{
 				ID:   idn,
-				Name: "图片 " + ids,
+				Name: r.file.pictures_prefix + ids,
 			}
 			pic.NonVisualPicProperties = &PICNonVisualPicProperties{
 				NonVisualDrawingProperties: NonVisualProperties{
 					ID:   id,
-					Name: "图片 " + ids,
+					Name: r.file.pictures_prefix + ids,
 				},
 				CNvPicPr: r.Graphic.GraphicData.Pic.NonVisualPicProperties.CNvPicPr,
 			}

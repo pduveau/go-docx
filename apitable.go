@@ -86,6 +86,22 @@ func (f *Docx) AddTableEmpty() *Table {
 	return tbl
 }
 
+func (f *Docx) NewTableEmpty() *Table {
+	tbl := &Table{
+		Properties: &WTableProperties{
+			Look: &WTableLook{
+				Val: "0000",
+			},
+		},
+		Grid: &WTableGrid{},
+		Rows: make([]*WTableRow, 0),
+	}
+
+	tbl.Style("TableGrid", 0)
+
+	return tbl
+}
+
 // AddTableTwips add a new table to body by height and width
 //
 // unit: twips (1/20 point)

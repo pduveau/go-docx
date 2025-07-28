@@ -35,10 +35,10 @@ type ParagraphProperties struct {
 	Spacing             *Spacing
 	NumProperties       *NumProperties
 	Ind                 *Ind
-	Justification       *Justification
 	Shade               *Shade
 	Kern                *Kern
 	Style               *Style
+	Justification       *Justification
 	TextAlignment       *TextAlignment
 	AdjustRightInd      *AdjustRightInd
 	SnapToGrid          *SnapToGrid
@@ -50,6 +50,8 @@ type ParagraphProperties struct {
 	SuppressAutoHyphens *SuppressAutoHyphens
 
 	RunProperties *RunProperties
+
+	Section *SectionProperties
 
 	ConfStyle *WTableConfStyle
 }
@@ -105,6 +107,14 @@ func (p *ParagraphProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) e
 				p.Ind = &value
 			case "jc":
 				p.Justification = &Justification{Val: getAtt(tt.Attr, "val")}
+			case "pageBreakBefore":
+				p.PageBreakBefore = &PageBreakBefore{}
+			case "keepLines":
+				p.KeepLines = &KeepLines{}
+			case "keepNext":
+				p.KeepNext = &KeepNext{}
+			case "suppressAutoHyphens":
+				p.SuppressAutoHyphens = &SuppressAutoHyphens{}
 			case "shd":
 				var value Shade
 				err = d.DecodeElement(&value, &tt)
@@ -202,15 +212,28 @@ func (p *ParagraphProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) e
 type Paragraph struct {
 	XMLName xml.Name `xml:"w:p,omitempty"`
 
-	// RsidR        string `xml:"w:rsidR,attr,omitempty"`
-	// RsidRPr      string `xml:"w:rsidRPr,attr,omitempty"`
-	// RsidRDefault string `xml:"w:rsidRDefault,attr,omitempty"`
-	// RsidP        string `xml:"w:rsidP,attr,omitempty"`
+	ParaID       string `xml:"w14:paraId,attr,omitempty"`
+	TextID       string `xml:"w14:textId,attr,omitempty"`
+	RsidR        string `xml:"w:rsidR,attr,omitempty"`
+	RsidRPr      string `xml:"w:rsidRPr,attr,omitempty"`
+	RsidRDefault string `xml:"w:rsidRDefault,attr,omitempty"`
+	RsidP        string `xml:"w:rsidP,attr,omitempty"`
 
 	Properties *ParagraphProperties
 	Children   []interface{}
 
 	file *Docx
+}
+
+func (p *Paragraph) Text() string {
+	s := ""
+	for _, c := range p.Children {
+		switch r := c.(type) {
+		case *Run:
+			s += r.Text()
+		}
+	}
+	return s
 }
 
 func (p *Paragraph) String() string {
@@ -224,39 +247,9 @@ func (p *Paragraph) String() string {
 	for _, c := range p.Children {
 		switch o := c.(type) {
 		case *Hyperlink:
-			id := o.ID
-			text := o.Run.InstrText
-			link, err := p.file.ReferTarget(id)
-			sb.WriteString("[")
-			sb.WriteString(text)
-			sb.WriteString("](")
-			if err != nil {
-				sb.WriteString(id)
-			} else {
-				sb.WriteString(link)
-			}
-			sb.WriteByte(')')
+			sb.WriteString(o.String())
 		case *Run:
-			for _, c := range o.Children {
-				switch x := c.(type) {
-				case *Text:
-					sb.WriteString(x.Text)
-				case *Tab:
-					sb.WriteByte('\t')
-				case *BarterRabbet:
-					sb.WriteByte('\n')
-				case *Drawing:
-					if x.Inline != nil {
-						sb.WriteString(x.Inline.String())
-						continue
-					}
-					if x.Anchor != nil {
-						sb.WriteString(x.Anchor.String())
-						continue
-					}
-				}
-			}
-		default:
+			sb.WriteString(o.String())
 			continue
 		}
 	}
@@ -264,9 +257,13 @@ func (p *Paragraph) String() string {
 }
 
 // UnmarshalXML ...
-func (p *Paragraph) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
-	/*for _, attr := range start.Attr {
+func (p *Paragraph) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	for _, attr := range start.Attr {
 		switch attr.Name.Local {
+		case "paraId":
+			p.ParaID = attr.Value
+		case "textId":
+			p.TextID = attr.Value
 		case "rsidR":
 			p.RsidR = attr.Value
 		case "rsidRPr":
@@ -278,7 +275,7 @@ func (p *Paragraph) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 		default:
 			// ignore other attributes
 		}
-	}*/
+	}
 	children := make([]interface{}, 0, 64)
 	for {
 		t, err := d.Token()
@@ -293,17 +290,10 @@ func (p *Paragraph) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 			switch tt.Name.Local {
 			case "hyperlink":
 				var value Hyperlink
+				value.file = p.file
 				err = d.DecodeElement(&value, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
-				}
-				id := getAtt(tt.Attr, "id")
-				anchor := getAtt(tt.Attr, "anchor")
-				if id != "" {
-					value.ID = id
-				}
-				if anchor != "" {
-					value.ID = anchor
 				}
 				elem = &value
 			case "r":
@@ -321,6 +311,13 @@ func (p *Paragraph) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 					return err
 				}
 				elem = &value
+			/*case "fldSimple":
+			var value SdtFldSimple
+			err = d.DecodeElement(&value, &tt)
+			if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+				return err
+			}
+			elem = &value*/
 			case "pPr":
 				var value ParagraphProperties
 				err = d.DecodeElement(&value, &tt)

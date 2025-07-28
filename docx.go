@@ -28,6 +28,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"regexp"
 	"sync"
 )
 
@@ -38,6 +39,8 @@ type Docx struct {
 
 	docRelation Relationships // docRelation is word/_rels/document.xml.rels
 
+	styles *Styles
+
 	media        []Media
 	mediaNameIdx map[string]int
 
@@ -46,6 +49,8 @@ type Docx struct {
 	docID     uintptr
 	slowIDs   map[string]uintptr
 	slowIDsMu sync.Mutex
+
+	pictures_prefix string
 
 	template string
 	tmplfs   fs.FS
@@ -59,6 +64,12 @@ type Docx struct {
 // later on, save
 func New() *Docx {
 	return newEmptyFile()
+}
+
+// Set the picture prefix in order to name them for a table of pictures
+// must be set before adding drawings
+func (f *Docx) SetPicturePrefix(prefix string) {
+	f.pictures_prefix = prefix + " "
 }
 
 // Parse generates a new docx file in memory from a reader
@@ -107,13 +118,43 @@ func LoadBodyItems(items []interface{}, media []Media) *Docx {
 			XMLName: xml.Name{
 				Space: "w",
 			},
-			XMLW:   XMLNS_W,
-			XMLR:   XMLNS_R,
-			XMLWP:  XMLNS_WP,
-			XMLWPS: XMLNS_WPS,
-			XMLWPC: XMLNS_WPC,
-			XMLWPG: XMLNS_WPG,
-			Body:   Body{Items: items},
+			XMLwpc:      XMLNS_WPC,
+			XMLcx:       XMLNS_CX,
+			XMLcx1:      XMLNS_CX1,
+			XMLcx2:      XMLNS_CX2,
+			XMLcx3:      XMLNS_CX3,
+			XMLcx4:      XMLNS_CX4,
+			XMLcx5:      XMLNS_CX5,
+			XMLcx6:      XMLNS_CX6,
+			XMLcx7:      XMLNS_CX7,
+			XMLcx8:      XMLNS_CX8,
+			XMLmc:       XMLNS_MC,
+			XMLaink:     XMLNS_AINK,
+			XMLam3d:     XMLNS_AM3D,
+			XMLo:        XMLNS_O,
+			XMLoel:      XMLNS_OEL,
+			XMLr:        XMLNS_R,
+			XMLm:        XMLNS_M,
+			XMLv:        XMLNS_V,
+			XMLwp14:     XMLNS_WP14,
+			XMLwp:       XMLNS_WP,
+			XMLw10:      XMLNS_W10,
+			XMLw:        XMLNS_W,
+			XMLw14:      XMLNS_W14,
+			XMLw15:      XMLNS_W15,
+			XMLw16cex:   XMLNS_W16CEX,
+			XMLw16cid:   XMLNS_W16CID,
+			XMLw16:      XMLNS_W16,
+			XMLw16du:    XMLNS_W16DU,
+			XMLw16sdtdh: XMLNS_W16SDTDH,
+			XMLw16sdtfl: XMLNS_W16SDTFL,
+			XMLw16se:    XMLNS_W16SE,
+			XMLwpg:      XMLNS_WPG,
+			XMLwpi:      XMLNS_WPI,
+			XMLwne:      XMLNS_WNE,
+			XMLwps:      XMLNS_WPS,
+			MCIgnorable: MC_IGNORABLE,
+			Body:        Body{Items: items},
 		},
 		docRelation: Relationships{
 			Xmlns: XMLNS_REL,
@@ -144,7 +185,7 @@ func LoadBodyItems(items []interface{}, media []Media) *Docx {
 	for i, m := range media {
 		doc.mediaNameIdx[m.Name] = i
 	}
-	doc.slowIDs["picture"] = uintptr(len(media) + 1)
+	doc.slowIDs["pictures"] = uintptr(len(media) + 1)
 	return doc
 }
 
@@ -174,13 +215,85 @@ func ReadDocument(path string) (doc *Docx, err error) {
 	return
 }
 
+// ClearDoc empty the document body
 func (d *Docx) ClearDoc() {
-	for _, i := range d.Document.Body.Items {
-		switch s := i.(type) {
-		case *SectPr:
-			d.Document.Body.Items = make([]interface{}, 1)
-			d.Document.Body.Items[0] = s
+	d.Document.Body.Items = make([]interface{}, 0)
+}
+
+func (f *Docx) FindItemIndex(filter *regexp.Regexp) (int, []string) {
+	for i, item := range f.Document.Body.Items {
+		switch p := item.(type) {
+		case *Paragraph:
+			s := p.Text()
+			if filter.MatchString(s) {
+				return i, filter.FindStringSubmatch(s)
+			}
+		}
+	}
+	return -1, []string{}
+}
+
+// insert indepent item(s) at position.
+// if position is < 0 or larger then the document Items array then the item(s) are appended at the end
+// return the position to the next item after insertion or -1 if nothing inserted
+func (f *Docx) InsertAt(position int, items ...interface{}) int {
+	if len(items) == 0 {
+		return -1
+	}
+	if position < 0 || position >= len(f.Document.Body.Items) {
+		f.Document.Body.Items = append(f.Document.Body.Items, items...)
+		return len(f.Document.Body.Items)
+	}
+	var start []interface{} = make([]interface{}, position, len(f.Document.Body.Items)+len(items))
+
+	if position > 0 {
+		copy(start, f.Document.Body.Items[:position])
+	}
+	start = append(start, items...)
+	l := len(start)
+	f.Document.Body.Items = append(start, f.Document.Body.Items[position:]...)
+	return l
+}
+
+// replace at position and length with indepent item(s).
+// if position is < 0 or larger then the document Items array then the item(s) are appended at the end
+// return the position to the next item after insertion or -1 if nothing inserted
+func (f *Docx) ReplaceAt(position, length int, items ...interface{}) int {
+	if len(items) == 0 {
+		return -1
+	}
+	if position < 0 || position >= len(f.Document.Body.Items) {
+		f.Document.Body.Items = append(f.Document.Body.Items, items...)
+		return len(f.Document.Body.Items)
+	}
+
+	var start []interface{} = make([]interface{}, position, len(f.Document.Body.Items)+len(items))
+
+	if position > 0 {
+		copy(start, f.Document.Body.Items[:position])
+	}
+	start = append(start, items...)
+	l := len(start)
+
+	if position+length < len(f.Document.Body.Items) {
+		f.Document.Body.Items = append(start, f.Document.Body.Items[(position+length):]...)
+	} else {
+		f.Document.Body.Items = start
+	}
+	return l
+}
+
+// Add or replace a style in the table identified by the styleId attribut
+// only one control (styleId != "") is done so be careful with this
+func (d *Docx) AddOrReplaceStyle(in *StyleStyle) {
+	if in.StyleId == "" {
+		return
+	}
+	for i, t := range d.styles.Styles {
+		if t.StyleId == in.StyleId {
+			d.styles.Styles[i] = in
 			return
 		}
 	}
+	d.styles.Styles = append(d.styles.Styles, in)
 }

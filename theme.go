@@ -37,13 +37,33 @@ func (f *Docx) WithDefaultTheme() *Docx {
 	return f.UseTemplate("default", DefaultTemplateFilesList, TemplateXMLFS)
 }
 
+func A4_PORTRAIT() *PageSize {
+	return &PageSize{W: 11906, H: 16838}
+}
+
+func A4_LANDSCAPE() *PageSize {
+	return &PageSize{W: 16838, H: 11906, Orientation: "landscape"}
+}
+
+func A3_PORTRAIT() *PageSize {
+	return &PageSize{W: 16838, H: 23811}
+}
+
+func A3_LANDSCAPE() *PageSize {
+	return &PageSize{W: 23811, H: 16838, Orientation: "landscape"}
+}
+
+func DEFAULT_MARGIN() *PageMargin {
+	return &PageMargin{Top: 1417, Left: 1417, Bottom: 1417, Right: 1417, Header: 708, Footer: 708}
+}
+
+const DEFAULT_COLS_SPACE = 708
+const DEFAULT_LINEPITCH = 360
+
 // WithA3Page use A3 PageSize
 func (f *Docx) WithA3Page() *Docx {
-	sectpr := &SectPr{
-		PgSz: &PgSz{
-			W: 16838,
-			H: 23811,
-		},
+	sectpr := &SectionProperties{
+		PageSize: A3_PORTRAIT(),
 	}
 	f.Document.Body.Items = append(f.Document.Body.Items, sectpr)
 	return f
@@ -51,11 +71,8 @@ func (f *Docx) WithA3Page() *Docx {
 
 // WithA4Page use A4 PageSize
 func (f *Docx) WithA4Page() *Docx {
-	sectpr := &SectPr{
-		PgSz: &PgSz{
-			W: 11906,
-			H: 16838,
-		},
+	sectpr := &SectionProperties{
+		PageSize: A4_PORTRAIT(),
 	}
 	f.Document.Body.Items = append(f.Document.Body.Items, sectpr)
 	return f

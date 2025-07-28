@@ -30,33 +30,72 @@ import (
 type Hyperlink struct {
 	XMLName xml.Name `xml:"w:hyperlink,omitempty"`
 	ID      string   `xml:"r:id,attr"`
-	Run     Run
+	Anchor  string   `xml:"w:anchor,attr,omitempty"`
+	History int      `xml:"w:history,attr,omitempty"`
+	Run     []*Run
+	file    *Docx
+}
+
+func (o *Hyperlink) String() string {
+	var s string
+	for _, r := range o.Run {
+		if r.InstrText.Text != "" {
+			s += "[" + (string)(r.InstrText.Text) + "]"
+		}
+
+	}
+	link, err := o.file.ReferTarget(o.ID)
+	if err != nil {
+		s += "(" + o.ID + ")"
+	} else {
+		s += "(" + link + ")"
+	}
+	return s
 }
 
 // UnmarshalXML ...
-func (r *Hyperlink) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
+func (h *Hyperlink) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
+	h.Run = make([]*Run, 0)
 	for {
-		t, err := d.Token()
+		var t xml.Token
+		t, err = d.Token()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return err
+			return
 		}
 
 		if tt, ok := t.(xml.StartElement); ok {
 			if tt.Name.Local == "r" {
-				err = d.DecodeElement(&r.Run, &tt)
+				var v Run
+				err = d.DecodeElement(&v, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
+				h.Run = append(h.Run, &v)
 				continue
 			}
 			err = d.Skip() // skip unsupported tags
 			if err != nil {
-				return err
+				return
 			}
 		}
 	}
-	return nil
+	for _, a := range start.Attr {
+		switch a.Name.Local {
+		case "id":
+			h.ID = a.Value
+		case "history":
+			h.History, err = GetInt(a.Value)
+		case "anchor":
+			h.Anchor = a.Value
+		}
+	}
+
+	if h.ID == "" {
+		h.ID = h.Anchor
+	}
+
+	return
 }

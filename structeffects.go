@@ -57,6 +57,11 @@ type SizeCs struct {
 	Val     string   `xml:"w:val,attr"`
 }
 
+// Caps ...
+type Caps struct {
+	XMLName xml.Name `xml:"w:caps,omitempty"`
+}
+
 // Bold ...
 type Bold struct {
 	XMLName xml.Name `xml:"w:b,omitempty"`
@@ -87,12 +92,12 @@ type Kern struct {
 
 // Justification contains the way of the horizonal alignment
 //
-//	w:jc 属性的取值可以是以下之一：
-//		start：左对齐。
-//		center：居中对齐。
-//		end：右对齐。
-//		both：两端对齐。
-//		distribute：分散对齐。
+//	w:jc
+//		start
+//		center
+//		end
+//		both
+//		distribute
 type Justification struct {
 	XMLName xml.Name `xml:"w:jc,omitempty"`
 	Val     string   `xml:"w:val,attr"`
@@ -125,6 +130,7 @@ type Lang struct {
 // Lang ...
 type NoProof struct {
 	XMLName xml.Name `xml:"w:noProof,omitempty"`
+	Val     string   `xml:"w:val,attr,omitempty"`
 }
 
 // Shade is an element that represents a shading pattern applied to a document element.
@@ -296,6 +302,7 @@ type Spacing struct {
 
 	BeforeLines int    `xml:"w:beforeLines,attr,omitempty"`
 	Before      int    `xml:"w:before,attr,omitempty"`
+	After       int    `xml:"w:after,attr,omitempty"`
 	Line        int    `xml:"w:line,attr,omitempty"`
 	LineRule    string `xml:"w:lineRule,attr,omitempty"`
 }
@@ -311,6 +318,11 @@ func (s *Spacing) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err erro
 			}
 		case "beforeLines":
 			s.BeforeLines, err = GetInt(attr.Value)
+			if err != nil {
+				return
+			}
+		case "after":
+			s.After, err = GetInt(attr.Value)
 			if err != nil {
 				return
 			}

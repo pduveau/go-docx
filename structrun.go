@@ -27,21 +27,97 @@ import (
 	"strings"
 )
 
+type RunInstrText struct {
+	XMLName xml.Name `xml:"w:instrText,omitempty"`
+	Space   string   `xml:"w:space,attr,omitempty"`
+	Text    string   `xml:",innerxml"`
+}
+
+func (r *RunInstrText) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	for _, attr := range start.Attr {
+		switch attr.Name.Local {
+		case "space":
+			r.Space = attr.Value
+		default:
+			// ignore other attributes
+		}
+	}
+	for {
+		t, err := d.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		if tt, ok := t.(xml.CharData); ok {
+			r.Text = string(tt) // implicitly copy
+		}
+	}
+
+	return nil
+}
+
+type LastRenderedPageBreak struct {
+	XMLName xml.Name `xml:"w:lastRenderedPageBreak,omitempty"`
+}
+
 // Run is part of a paragraph that has its own style. It could be
 // a piece of text in bold, or a link
 type Run struct {
 	XMLName xml.Name `xml:"w:r,omitempty"`
 	Space   string   `xml:"xml:space,attr,omitempty"`
-	// RsidR   string   `xml:"w:rsidR,attr,omitempty"`
-	// RsidRPr string   `xml:"w:rsidRPr,attr,omitempty"`
+	RsidR   string   `xml:"w:rsidR,attr,omitempty"`
+	RsidRPr string   `xml:"w:rsidRPr,attr,omitempty"`
+
+	FldChar *RunFldChar
 
 	RunProperties *RunProperties `xml:"w:rPr,omitempty"`
 
-	InstrText string `xml:"w:instrText,omitempty"`
+	InstrText *RunInstrText
 
 	Children []interface{}
 
 	file *Docx
+}
+
+// Text...
+func (r *Run) Text() string {
+	s := ""
+	for _, c := range r.Children {
+		switch t := c.(type) {
+		case *Text:
+			s += t.Text
+		case *Tab:
+			s += "\t"
+		}
+	}
+	return s
+}
+
+func (r *Run) String() string {
+	s := ""
+	for _, c := range r.Children {
+		switch x := c.(type) {
+		case *Text:
+			s += x.Text
+		case *Tab:
+			s += "\t"
+		case *BarterRabbet:
+			s += "\n"
+		case *Drawing:
+			if x.Inline != nil {
+				s += x.Inline.String()
+				continue
+			}
+			if x.Anchor != nil {
+				s += x.Anchor.String()
+				continue
+			}
+		}
+	}
+	return s
 }
 
 // UnmarshalXML ...
@@ -50,10 +126,10 @@ func (r *Run) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		switch attr.Name.Local {
 		case "space":
 			r.Space = attr.Value
-		/*case "rsidR":
+		case "rsidR":
 			r.RsidR = attr.Value
 		case "rsidRPr":
-			r.RsidRPr = attr.Value*/
+			r.RsidRPr = attr.Value
 		default:
 			// ignore other attributes
 		}
@@ -91,13 +167,21 @@ func (r *Run) parse(d *xml.Decoder, tt xml.StartElement) (child interface{}, err
 		}
 		r.RunProperties = &value
 		return nil, nil
-	case "instrText":
-		var value string
+	case "fldChar":
+		var value RunFldChar
 		err = d.DecodeElement(&value, &tt)
 		if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 			return nil, err
 		}
-		r.InstrText = value
+		r.FldChar = &value
+		return nil, nil
+	case "instrText":
+		var value RunInstrText
+		err = d.DecodeElement(&value, &tt)
+		if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+			return nil, err
+		}
+		r.InstrText = &value
 		return nil, nil
 	case "t":
 		var value Text
@@ -116,6 +200,8 @@ func (r *Run) parse(d *xml.Decoder, tt xml.StartElement) (child interface{}, err
 		child = &value
 	case "tab":
 		child = &Tab{}
+	case "lastRenderedPageBreak":
+		child = &LastRenderedPageBreak{}
 	case "br":
 		var value BarterRabbet
 		err = d.DecodeElement(&value, &tt)
@@ -202,23 +288,25 @@ func (r *Run) KeepElements(name ...string) {
 type RunProperties struct {
 	XMLName   xml.Name `xml:"w:rPr,omitempty"`
 	Fonts     *RunFonts
+	RunStyle  *RunStyle
 	Bold      *Bold
-	ICs       *struct{} `xml:"w:iCs,omitempty"`
+	BCs       *struct{} `xml:"w:bCs,omitempty"`
 	Italic    *Italic
+	ICs       *struct{} `xml:"w:iCs,omitempty"`
+	Caps      *Caps
 	Highlight *Highlight
 	Color     *Color
+	Lang      *Lang
+	NoProof   *NoProof
 	Size      *Size
 	SizeCs    *SizeCs
 	Spacing   *Spacing
-	RunStyle  *RunStyle
 	Style     *Style
 	Shade     *Shade
 	Kern      *Kern
 	Underline *Underline
 	VertAlign *VertAlign
 	Strike    *Strike
-	Lang      *Lang
-	NoProof   *NoProof
 }
 
 // UnmarshalXML ...
@@ -243,26 +331,22 @@ func (r *RunProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				r.Fonts = &value
 			case "b":
 				r.Bold = &Bold{}
+			case "caps":
+				r.Caps = &Caps{}
+			case "bCs":
+				r.BCs = &struct{}{}
 			case "iCs":
 				r.ICs = &struct{}{}
 			case "i":
 				r.Italic = &Italic{}
 			case "u":
-				var value Underline
-				value.Val = getAtt(tt.Attr, "val")
-				r.Underline = &value
+				r.Underline = &Underline{Val: getAtt(tt.Attr, "val")}
 			case "highlight":
-				var value Highlight
-				value.Val = getAtt(tt.Attr, "val")
-				r.Highlight = &value
+				r.Highlight = &Highlight{Val: getAtt(tt.Attr, "val")}
 			case "color":
-				var value Color
-				value.Val = getAtt(tt.Attr, "val")
-				r.Color = &value
+				r.Color = &Color{Val: getAtt(tt.Attr, "val")}
 			case "sz":
-				var value Size
-				value.Val = getAtt(tt.Attr, "val")
-				r.Size = &value
+				r.Size = &Size{Val: getAtt(tt.Attr, "val")}
 			case "spacing":
 				var value Spacing
 				err = d.DecodeElement(&value, &tt)
@@ -271,17 +355,11 @@ func (r *RunProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				}
 				r.Spacing = &value
 			case "szCs":
-				var value SizeCs
-				value.Val = getAtt(tt.Attr, "val")
-				r.SizeCs = &value
+				r.SizeCs = &SizeCs{Val: getAtt(tt.Attr, "val")}
 			case "rStyle":
-				var value RunStyle
-				value.Val = getAtt(tt.Attr, "val")
-				r.RunStyle = &value
+				r.RunStyle = &RunStyle{Val: getAtt(tt.Attr, "val")}
 			case "pStyle":
-				var value Style
-				value.Val = getAtt(tt.Attr, "val")
-				r.Style = &value
+				r.Style = &Style{Val: getAtt(tt.Attr, "val")}
 			case "shd":
 				var value Shade
 				err = d.DecodeElement(&value, &tt)
@@ -301,21 +379,13 @@ func (r *RunProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				}
 				r.Kern = &value
 			case "vertAlign":
-				var value VertAlign
-				value.Val = getAtt(tt.Attr, "val")
-				r.VertAlign = &value
+				r.VertAlign = &VertAlign{Val: getAtt(tt.Attr, "val")}
 			case "strike":
-				var value Strike
-				value.Val = getAtt(tt.Attr, "val")
-				r.Strike = &value
+				r.Strike = &Strike{Val: getAtt(tt.Attr, "val")}
 			case "lang":
-				var value Lang
-				value.Val = getAtt(tt.Attr, "val")
-				r.Lang = &value
+				r.Lang = &Lang{Val: getAtt(tt.Attr, "val")}
 			case "noProof":
-				var value Lang
-				value.Val = getAtt(tt.Attr, "val")
-				r.Lang = &value
+				r.NoProof = &NoProof{Val: getAtt(tt.Attr, "val")}
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -340,13 +410,36 @@ func (t *RunProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error
 	return e.Encode((*_t)(t))
 }
 
+type RunFldChar struct {
+	XMLName     xml.Name `xml:"w:fldChar,omitempty"`
+	FldCharType string   `xml:"w:fldCharType,attr,omitempty"`
+}
+
+// UnmarshalXML ...
+func (f *RunFldChar) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
+	for _, attr := range start.Attr {
+		switch attr.Name.Local {
+		case "fldCharType":
+			f.FldCharType = attr.Value
+		}
+	}
+	// Consume the end element
+	_, err = d.Token()
+	return err
+}
+
 // RunFonts specifies the fonts used in the text of a run.
 type RunFonts struct {
-	XMLName  xml.Name `xml:"w:rFonts,omitempty"`
-	ASCII    string   `xml:"w:ascii,attr,omitempty"`
-	EastAsia string   `xml:"w:eastAsia,attr,omitempty"`
-	HAnsi    string   `xml:"w:hAnsi,attr,omitempty"`
-	Hint     string   `xml:"w:hint,attr,omitempty"`
+	XMLName       xml.Name `xml:"w:rFonts,omitempty"`
+	ASCII         string   `xml:"w:ascii,attr,omitempty"`
+	EastAsia      string   `xml:"w:eastAsia,attr,omitempty"`
+	HAnsi         string   `xml:"w:hAnsi,attr,omitempty"`
+	Cs            string   `xml:"w:cs,attr,omitempty"`
+	ASCIITheme    string   `xml:"w:asciiTheme,attr,omitempty"`
+	EastAsiaTheme string   `xml:"w:eastAsiaTheme,attr,omitempty"`
+	HAnsiTheme    string   `xml:"w:hAnsiTheme,attr,omitempty"`
+	CsTheme       string   `xml:"w:cstheme,attr,omitempty"`
+	Hint          string   `xml:"w:hint,attr,omitempty"`
 }
 
 // UnmarshalXML ...
@@ -359,6 +452,16 @@ func (f *RunFonts) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 			f.EastAsia = attr.Value
 		case "hAnsi":
 			f.HAnsi = attr.Value
+		case "cs":
+			f.Cs = attr.Value
+		case "asciiTheme":
+			f.ASCIITheme = attr.Value
+		case "eastAsiaTheme":
+			f.EastAsiaTheme = attr.Value
+		case "hAnsiTheme":
+			f.HAnsiTheme = attr.Value
+		case "cstheme":
+			f.CsTheme = attr.Value
 		case "hint":
 			f.Hint = attr.Value
 		}

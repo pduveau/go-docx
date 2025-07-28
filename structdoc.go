@@ -30,20 +30,196 @@ import (
 
 //nolint:revive,stylecheck
 const (
-	XMLNS_W   = `http://schemas.openxmlformats.org/wordprocessingml/2006/main`
-	XMLNS_R   = `http://schemas.openxmlformats.org/officeDocument/2006/relationships`
-	XMLNS_WP  = `http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing`
-	XMLNS_WPS = `http://schemas.microsoft.com/office/word/2010/wordprocessingShape`
-	XMLNS_WPC = `http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas`
-	XMLNS_WPG = `http://schemas.microsoft.com/office/word/2010/wordprocessingGroup`
-	XMLNS_MC  = `http://schemas.openxmlformats.org/markup-compatibility/2006`
-	// XMLNS_WP14 = `http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing`
-
-	XMLNS_O = `urn:schemas-microsoft-com:office:office`
-	XMLNS_V = `urn:schemas-microsoft-com:vml`
+	XMLNS_WPC      = `http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas`
+	XMLNS_CX       = "http://schemas.microsoft.com/office/drawing/2014/chartex"
+	XMLNS_CX1      = "http://schemas.microsoft.com/office/drawing/2015/9/8/chartex"
+	XMLNS_CX2      = "http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+	XMLNS_CX3      = "http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+	XMLNS_CX4      = "http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+	XMLNS_CX5      = "http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+	XMLNS_CX6      = "http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+	XMLNS_CX7      = "http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+	XMLNS_CX8      = "http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+	XMLNS_MC       = `http://schemas.openxmlformats.org/markup-compatibility/2006`
+	XMLNS_AINK     = "http://schemas.microsoft.com/office/drawing/2016/ink"
+	XMLNS_AM3D     = "http://schemas.microsoft.com/office/drawing/2017/model3d"
+	XMLNS_O        = `urn:schemas-microsoft-com:office:office`
+	XMLNS_OEL      = "http://schemas.microsoft.com/office/2019/extlst"
+	XMLNS_R        = `http://schemas.openxmlformats.org/officeDocument/2006/relationships`
+	XMLNS_M        = "http://schemas.openxmlformats.org/officeDocument/2006/math"
+	XMLNS_V        = `urn:schemas-microsoft-com:vml`
+	XMLNS_WP14     = `http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing`
+	XMLNS_WP       = `http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing`
+	XMLNS_W10      = "urn:schemas-microsoft-com:office:word"
+	XMLNS_W        = `http://schemas.openxmlformats.org/wordprocessingml/2006/main`
+	XMLNS_W14      = "http://schemas.microsoft.com/office/word/2010/wordml"
+	XMLNS_W15      = "http://schemas.microsoft.com/office/word/2012/wordml"
+	XMLNS_W16CEX   = "http://schemas.microsoft.com/office/word/2018/wordml/cex"
+	XMLNS_W16CID   = "http://schemas.microsoft.com/office/word/2016/wordml/cid"
+	XMLNS_W16      = "http://schemas.microsoft.com/office/word/2018/wordml"
+	XMLNS_W16DU    = "http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+	XMLNS_W16SDTDH = "http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+	XMLNS_W16SDTFL = "http://schemas.microsoft.com/office/word/2024/wordml/sdtformatlock"
+	XMLNS_W16SE    = "http://schemas.microsoft.com/office/word/2015/wordml/symex"
+	XMLNS_WPG      = `http://schemas.microsoft.com/office/word/2010/wordprocessingGroup`
+	XMLNS_WPI      = "http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+	XMLNS_WNE      = "http://schemas.microsoft.com/office/word/2006/wordml"
+	XMLNS_WPS      = `http://schemas.microsoft.com/office/word/2010/wordprocessingShape`
+	MC_IGNORABLE   = "w14 w15 w16se w16cid w16 w16cex w16sdtdh w16sdtfl w16du wp14"
 
 	XMLNS_PICTURE = `http://schemas.openxmlformats.org/drawingml/2006/picture`
 )
+
+// Document <w:document>
+type Document struct {
+	XMLName     xml.Name `xml:"w:document"`
+	XMLwpc      string   `xml:"xmlns:wpc,attr,omitempty"`
+	XMLcx       string   `xml:"xmlns:cx,attr,omitempty"`
+	XMLcx1      string   `xml:"xmlns:cx1,attr,omitempty"`
+	XMLcx2      string   `xml:"xmlns:cx2,attr,omitempty"`
+	XMLcx3      string   `xml:"xmlns:cx3,attr,omitempty"`
+	XMLcx4      string   `xml:"xmlns:cx4,attr,omitempty"`
+	XMLcx5      string   `xml:"xmlns:cx5,attr,omitempty"`
+	XMLcx6      string   `xml:"xmlns:cx6,attr,omitempty"`
+	XMLcx7      string   `xml:"xmlns:cx7,attr,omitempty"`
+	XMLcx8      string   `xml:"xmlns:cx8,attr,omitempty"`
+	XMLmc       string   `xml:"xmlns:mc,attr,omitempty"`
+	XMLaink     string   `xml:"xmlns:aink,attr,omitempty"`
+	XMLam3d     string   `xml:"xmlns:am3d,attr,omitempty"`
+	XMLo        string   `xml:"xmlns:o,attr,omitempty"`
+	XMLoel      string   `xml:"xmlns:oel,attr,omitempty"`
+	XMLr        string   `xml:"xmlns:r,attr,omitempty"`
+	XMLm        string   `xml:"xmlns:m,attr,omitempty"`
+	XMLv        string   `xml:"xmlns:v,attr,omitempty"`
+	XMLwp14     string   `xml:"xmlns:wp14,attr,omitempty"`
+	XMLwp       string   `xml:"xmlns:wp,attr,omitempty"`
+	XMLw10      string   `xml:"xmlns:w10,attr,omitempty"`
+	XMLw        string   `xml:"xmlns:w,attr,omitempty"`
+	XMLw14      string   `xml:"xmlns:w14,attr,omitempty"`
+	XMLw15      string   `xml:"xmlns:w15,attr,omitempty"`
+	XMLw16cex   string   `xml:"xmlns:w16cex,attr,omitempty"`
+	XMLw16cid   string   `xml:"xmlns:w16cid,attr,omitempty"`
+	XMLw16      string   `xml:"xmlns:w16,attr,omitempty"`
+	XMLw16du    string   `xml:"xmlns:w16du,attr,omitempty"`
+	XMLw16sdtdh string   `xml:"xmlns:w16sdtdh,attr,omitempty"`
+	XMLw16sdtfl string   `xml:"xmlns:w16sdtfl,attr,omitempty"`
+	XMLw16se    string   `xml:"xmlns:w16se,attr,omitempty"`
+	XMLwpg      string   `xml:"xmlns:wpg,attr,omitempty"`
+	XMLwpi      string   `xml:"xmlns:wpi,attr,omitempty"`
+	XMLwne      string   `xml:"xmlns:wne,attr,omitempty"`
+	XMLwps      string   `xml:"xmlns:wps,attr,omitempty"`
+	MCIgnorable string   `xml:"mc:Ignorable,attr,omitempty"`
+
+	Body Body `xml:"w:body"`
+}
+
+// UnmarshalXML ...
+func (doc *Document) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	for _, attr := range start.Attr {
+		if attr.Value == "" {
+			continue
+		}
+		switch attr.Name.Local {
+		case "wpc":
+			doc.XMLwpc = attr.Value
+		case "cx":
+			doc.XMLcx = attr.Value
+		case "cx1":
+			doc.XMLcx1 = attr.Value
+		case "cx2":
+			doc.XMLcx2 = attr.Value
+		case "cx3":
+			doc.XMLcx3 = attr.Value
+		case "cx4":
+			doc.XMLcx4 = attr.Value
+		case "cx5":
+			doc.XMLcx5 = attr.Value
+		case "cx6":
+			doc.XMLcx6 = attr.Value
+		case "cx7":
+			doc.XMLcx7 = attr.Value
+		case "cx8":
+			doc.XMLcx8 = attr.Value
+		case "mc":
+			doc.XMLmc = attr.Value
+		case "aink":
+			doc.XMLaink = attr.Value
+		case "am3d":
+			doc.XMLam3d = attr.Value
+		case "o":
+			doc.XMLo = attr.Value
+		case "oel":
+			doc.XMLoel = attr.Value
+		case "r":
+			doc.XMLr = attr.Value
+		case "m":
+			doc.XMLm = attr.Value
+		case "v":
+			doc.XMLv = attr.Value
+		case "wp14":
+			doc.XMLwp14 = attr.Value
+		case "wp":
+			doc.XMLwp = attr.Value
+		case "w10":
+			doc.XMLw10 = attr.Value
+		case "w":
+			doc.XMLw = attr.Value
+		case "w14":
+			doc.XMLw14 = attr.Value
+		case "w15":
+			doc.XMLw15 = attr.Value
+		case "w16cex":
+			doc.XMLw16cex = attr.Value
+		case "w16cid":
+			doc.XMLw16cid = attr.Value
+		case "w16":
+			doc.XMLw16 = attr.Value
+		case "w16du":
+			doc.XMLw16du = attr.Value
+		case "w16sdtdh":
+			doc.XMLw16sdtdh = attr.Value
+		case "w16sdtfl":
+			doc.XMLw16sdtfl = attr.Value
+		case "w16se":
+			doc.XMLw16se = attr.Value
+		case "wpg":
+			doc.XMLwpg = attr.Value
+		case "wpi":
+			doc.XMLwpi = attr.Value
+		case "wne":
+			doc.XMLwne = attr.Value
+		case "wps":
+			doc.XMLwps = attr.Value
+		case "Ignorable":
+			doc.MCIgnorable = attr.Value
+		default:
+		}
+	}
+	for {
+		t, err := d.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		if tt, ok := t.(xml.StartElement); ok {
+			if tt.Name.Local == "body" {
+				err = d.DecodeElement(&doc.Body, &tt)
+				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+					return err
+				}
+				continue
+			}
+			err = d.Skip() // skip unsupported tags
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 
 func getAtt(atts []xml.Attr, name string) string {
 	for _, at := range atts {
@@ -90,8 +266,15 @@ func (b *Body) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 					return err
 				}
 				b.Items = append(b.Items, &value)
+			case "sdt":
+				var value Sdt
+				err = d.DecodeElement(&value, &tt)
+				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+					return err
+				}
+				b.Items = append(b.Items, &value)
 			case "sectPr":
-				var value SectPr
+				var value SectionProperties
 				err = d.DecodeElement(&value, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
@@ -163,54 +346,6 @@ const ( //	w:jc possible values：
 	JUSTIFICATION_DISTRIBUTE _justification = "distribute" // disperse Alignment
 )
 
-// Document <w:document>
-type Document struct {
-	XMLName xml.Name `xml:"w:document"`
-	XMLW    string   `xml:"xmlns:w,attr"`             // cannot be unmarshalled in
-	XMLR    string   `xml:"xmlns:r,attr,omitempty"`   // cannot be unmarshalled in
-	XMLWP   string   `xml:"xmlns:wp,attr,omitempty"`  // cannot be unmarshalled in
-	XMLWPS  string   `xml:"xmlns:wps,attr,omitempty"` // cannot be unmarshalled in
-	XMLWPC  string   `xml:"xmlns:wpc,attr,omitempty"` // cannot be unmarshalled in
-	XMLWPG  string   `xml:"xmlns:wpg,attr,omitempty"` // cannot be unmarshalled in
-	// XMLMC   string   `xml:"xmlns:mc,attr,omitempty"`  // cannot be unmarshalled in
-	// XMLWP14 string   `xml:"xmlns:wp14,attr,omitempty"` // cannot be unmarshalled in
-
-	// XMLO string `xml:"xmlns:o,attr,omitempty"` // cannot be unmarshalled in
-	// XMLV string `xml:"xmlns:v,attr,omitempty"` // cannot be unmarshalled in
-
-	// MCIgnorable string `xml:"mc:Ignorable,attr,omitempty"`
-
-	Body Body `xml:"w:body"`
-}
-
-// UnmarshalXML ...
-func (doc *Document) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
-	for {
-		t, err := d.Token()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		if tt, ok := t.(xml.StartElement); ok {
-			if tt.Name.Local == "body" {
-				err = d.DecodeElement(&doc.Body, &tt)
-				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
-					return err
-				}
-				continue
-			}
-			err = d.Skip() // skip unsupported tags
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // ParagraphSplitRule check whether the paragraph is a separator or not
 type ParagraphSplitRule func(*Paragraph) bool
 
@@ -238,15 +373,15 @@ newdoclop:
 		ndoc.tmplfs = f.tmplfs
 		ndoc.tmpfslst = f.tmpfslst
 
-		ndoc.Document.XMLW = XMLNS_W
-		ndoc.Document.XMLR = XMLNS_R
-		ndoc.Document.XMLWP = XMLNS_WP
+		ndoc.Document.XMLw = XMLNS_W
+		ndoc.Document.XMLr = XMLNS_R
+		ndoc.Document.XMLwp = XMLNS_WP
 		// ndoc.Document.XMLMC = XMLNS_MC
 		// ndoc.Document.XMLO = XMLNS_O
 		// ndoc.Document.XMLV = XMLNS_V
-		ndoc.Document.XMLWPS = XMLNS_WPS
-		ndoc.Document.XMLWPC = XMLNS_WPC
-		ndoc.Document.XMLWPG = XMLNS_WPG
+		ndoc.Document.XMLwps = XMLNS_WPS
+		ndoc.Document.XMLwpc = XMLNS_WPC
+		ndoc.Document.XMLwpg = XMLNS_WPG
 		// ndoc.Document.XMLWP14 = XMLNS_WP14
 		ndoc.Document.XMLName.Space = XMLNS_W
 		ndoc.Document.XMLName.Local = "document"
@@ -330,10 +465,15 @@ func (p *Paragraph) copymedia(to *Docx) (np Paragraph) {
 				continue
 			}
 			rid := to.addLinkRelation(tgt)
-			np.Children = append(np.Children, &Hyperlink{
-				ID:  rid,
-				Run: *h.Run.copymedia(to),
-			})
+			nh := &Hyperlink{
+				ID:   rid,
+				Run:  make([]*Run, 0),
+				file: to,
+			}
+			for _, ru := range h.Run {
+				nh.Run = append(nh.Run, ru.copymedia(to))
+			}
+			np.Children = append(np.Children, nh)
 			continue
 		}
 		np.Children = append(np.Children, pc)

@@ -24,23 +24,26 @@ import (
 	"strings"
 )
 
-// SectPr show the properties of the document, like paper size
-type SectPr struct {
-	XMLName xml.Name `xml:"w:sectPr,omitempty"` // properties of the document, including paper size
-	PgSz    *PgSz    `xml:"w:pgSz,omitempty"`
-	PgMar   *PgMar   `xml:"w:pgMar,omitempty"`
-	Cols    *Cols    `xml:"w:cols,omitempty"`
-	DocGrid *DocGrid `xml:"w:docGrid,omitempty"`
+// SectionProperties show the properties of the document, like paper size
+type SectionProperties struct {
+	XMLName    xml.Name     `xml:"w:sectPr,omitempty"` // properties of the document, including paper size
+	HeaderRefs []*HeaderRef `xml:"w:headerReference,omitempty"`
+	FooterRefs []*FooterRef `xml:"w:footerReference,omitempty"`
+	PageSize   *PageSize    `xml:"w:pgSz,omitempty"`
+	PageMargin *PageMargin  `xml:"w:pgMar,omitempty"`
+	Cols       *Cols        `xml:"w:cols,omitempty"`
+	DocGrid    *DocGrid     `xml:"w:docGrid,omitempty"`
 }
 
 // PgSz show the paper size
-type PgSz struct {
-	W int `xml:"w:w,attr"` // width of paper
-	H int `xml:"w:h,attr"` // high of paper
+type PageSize struct {
+	W           int    `xml:"w:w,attr"`                // width of paper
+	H           int    `xml:"w:h,attr"`                // high of paper
+	Orientation string `xml:"w:orient,attr,omitempty"` // landscape or empty
 }
 
 // PgMar show the page margin
-type PgMar struct {
+type PageMargin struct {
 	Top    int `xml:"w:top,attr"`
 	Left   int `xml:"w:left,attr"`
 	Bottom int `xml:"w:bottom,attr"`
@@ -57,12 +60,22 @@ type Cols struct {
 
 // DocGrid show the document grid
 type DocGrid struct {
-	Type      string `xml:"w:type,attr"`
-	LinePitch int    `xml:"w:linePitch,attr"`
+	Type      string `xml:"w:type,attr,omitempty"`
+	LinePitch int    `xml:"w:linePitch,attr,omitempty"`
+}
+
+type HeaderRef struct {
+	Type string `xml:"w:type,attr,omitempty"`
+	ID   string `xml:"r:id,attr,omitempty"`
+}
+
+type FooterRef struct {
+	Type string `xml:"w:type,attr,omitempty"`
+	ID   string `xml:"r:id,attr,omitempty"`
 }
 
 // UnmarshalXML ...
-func (sect *SectPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
+func (sect *SectionProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 	for {
 		t, err := d.Token()
 		if err == io.EOF {
@@ -73,20 +86,34 @@ func (sect *SectPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 		}
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
+			case "headerReference":
+				var value HeaderRef
+				err = d.DecodeElement(&value, &tt)
+				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+					return err
+				}
+				sect.HeaderRefs = append(sect.HeaderRefs, &value)
+			case "footerReference":
+				var value FooterRef
+				err = d.DecodeElement(&value, &tt)
+				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
+					return err
+				}
+				sect.FooterRefs = append(sect.FooterRefs, &value)
 			case "pgSz":
-				var value PgSz
+				var value PageSize
 				err = d.DecodeElement(&value, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
-				sect.PgSz = &value
+				sect.PageSize = &value
 			case "pgMar":
-				var value PgMar
+				var value PageMargin
 				err = d.DecodeElement(&value, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
-				sect.PgMar = &value
+				sect.PageMargin = &value
 			case "cols":
 				var value Cols
 				err = d.DecodeElement(&value, &tt)
@@ -113,7 +140,7 @@ func (sect *SectPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 }
 
 // UnmarshalXML ...
-func (pgsz *PgSz) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (pgsz *PageSize) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var err error
 
 	for _, attr := range start.Attr {
@@ -138,7 +165,7 @@ func (pgsz *PgSz) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 }
 
 // UnmarshalXML ...
-func (pgmar *PgMar) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (pgmar *PageMargin) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var err error
 
 	for _, attr := range start.Attr {
@@ -220,6 +247,44 @@ func (dg *DocGrid) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 			}
 		case "type":
 			dg.Type = attr.Value
+		default:
+			// ignore other attributes now
+		}
+	}
+	// Consume the end element
+	_, err = d.Token()
+	return err
+}
+
+// UnmarshalXML ...
+func (r *FooterRef) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var err error
+
+	for _, attr := range start.Attr {
+		switch attr.Name.Local {
+		case "id":
+			r.ID = attr.Value
+		case "type":
+			r.Type = attr.Value
+		default:
+			// ignore other attributes now
+		}
+	}
+	// Consume the end element
+	_, err = d.Token()
+	return err
+}
+
+// UnmarshalXML ...
+func (r *HeaderRef) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var err error
+
+	for _, attr := range start.Attr {
+		switch attr.Name.Local {
+		case "id":
+			r.ID = attr.Value
+		case "type":
+			r.Type = attr.Value
 		default:
 			// ignore other attributes now
 		}

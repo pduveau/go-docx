@@ -58,6 +58,13 @@ func unpack(zipReader *zip.Reader) (docx *Docx, err error) {
 			}
 			continue
 		}
+		if f.Name == "word/styles.xml" {
+			err = docx.parseStyles(f)
+			if err != nil {
+				return
+			}
+			continue
+		}
 		if strings.HasPrefix(f.Name, MEDIA_FOLDER) {
 			err = docx.parseMedia(f)
 			if err != nil {
@@ -81,15 +88,15 @@ func (f *Docx) parseDocument(file *zip.File) error {
 	}
 	defer zf.Close()
 
-	f.Document.XMLW = XMLNS_W
-	f.Document.XMLR = XMLNS_R
-	f.Document.XMLWP = XMLNS_WP
+	f.Document.XMLw = XMLNS_W
+	f.Document.XMLr = XMLNS_R
+	f.Document.XMLwp = XMLNS_WP
 	// f.Document.XMLMC = XMLNS_MC
 	// f.Document.XMLO = XMLNS_O
 	// f.Document.XMLV = XMLNS_V
-	f.Document.XMLWPS = XMLNS_WPS
-	f.Document.XMLWPC = XMLNS_WPC
-	f.Document.XMLWPG = XMLNS_WPG
+	f.Document.XMLwps = XMLNS_WPS
+	f.Document.XMLwpc = XMLNS_WPC
+	f.Document.XMLwpg = XMLNS_WPG
 	// f.Document.XMLWP14 = XMLNS_WP14
 	f.Document.XMLName.Space = XMLNS_W
 	f.Document.XMLName.Local = "document"
@@ -98,6 +105,18 @@ func (f *Docx) parseDocument(file *zip.File) error {
 	//TODO: find last docID
 	f.docID = 100000
 	err = xml.NewDecoder(zf).Decode(&f.Document)
+	return err
+}
+
+// parseDocument processes one of the relevant files, the one with the actual document
+func (f *Docx) parseStyles(file *zip.File) error {
+	zf, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer zf.Close()
+
+	err = xml.NewDecoder(zf).Decode(&f.styles)
 	return err
 }
 

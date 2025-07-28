@@ -20,6 +20,14 @@
 
 package docx
 
+// CreateParagrah creates an independent paragraph that can be inserted later
+func (f *Docx) NewParagraph() *Paragraph {
+	return &Paragraph{
+		Children: make([]interface{}, 0, 64),
+		file:     f,
+	}
+}
+
 // AddParagraph adds a new paragraph
 func (f *Docx) AddParagraph() *Paragraph {
 	p := &Paragraph{

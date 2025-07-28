@@ -63,9 +63,9 @@ func TestUnmarshalPlainStructure(t *testing.T) {
 						t.Fatalf("We have a link without ID")
 					}
 				}
-			case *SectPr:
+			case *SectionProperties:
 				if v.PgSz.W != 11906 || v.PgSz.H != 16838 {
-					t.Fatalf("We were not able to parse sectPr")
+					t.Fatalf("We were not able to parse SectionProperties")
 				}
 			}
 		}

@@ -152,7 +152,7 @@ func (r *Run) Font(ascii, eastAsia, hansi, hint string) *Run {
 // if a parameter is a string it will be used as the language
 // if a parameter is a boolean it will be used to set the check (true) or nocheck (false)
 // the two parameter can be provide together
-func (r *Run) LangCheck(check ...any) {
+func (r *Run) LangCheck(check ...any) *Run {
 	proof := true
 	lang := ""
 	for _, c := range check {
@@ -173,4 +173,5 @@ func (r *Run) LangCheck(check ...any) {
 	} else {
 		r.RunProperties.NoProof = &NoProof{}
 	}
+	return r
 }
