@@ -228,24 +228,12 @@ func (s *StyleLsdException) UnmarshalXML(d *xml.Decoder, start xml.StartElement)
 			s.Name = attr.Value
 		case "uiPriority":
 			s.UiPriority = attr.Value
-			if err != nil {
-				return err
-			}
 		case "qFormat":
 			s.QFormat = attr.Value
-			if err != nil {
-				return err
-			}
 		case "semiHidden":
 			s.SemiHidden = attr.Value
-			if err != nil {
-				return err
-			}
 		case "unhideWhenUsed":
 			s.UnhideWhenUsed = attr.Value
-			if err != nil {
-				return err
-			}
 		default:
 		}
 	}
@@ -266,7 +254,6 @@ type StyleLatentStyles struct {
 
 // UnmarshalXML...
 func (s *StyleLatentStyles) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var err error
 	for _, attr := range start.Attr {
 		if attr.Value == "" {
 			continue
@@ -274,34 +261,16 @@ func (s *StyleLatentStyles) UnmarshalXML(d *xml.Decoder, start xml.StartElement)
 		switch attr.Name.Local {
 		case "defLockedState":
 			s.DefLockedState = attr.Value
-			if err != nil {
-				return err
-			}
 		case "defUIPriority":
 			s.DefUIPriority = attr.Value
-			if err != nil {
-				return err
-			}
 		case "defQFormat":
 			s.DefQFormat = attr.Value
-			if err != nil {
-				return err
-			}
 		case "defSemiHidden":
 			s.DefSemiHidden = attr.Value
-			if err != nil {
-				return err
-			}
 		case "defUnhideWhenUsed":
 			s.DefUnhideWhenUsed = attr.Value
-			if err != nil {
-				return err
-			}
 		case "count":
 			s.Count = attr.Value
-			if err != nil {
-				return err
-			}
 		default:
 		}
 	}
@@ -952,9 +921,6 @@ func (s *StyleSpacing) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err
 			s.LineRule = attr.Value
 		default:
 		}
-		if err != nil {
-			return
-		}
 	}
 	_, err = d.Token()
 	return
@@ -977,9 +943,6 @@ func (s *StyleTblInd) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err 
 			s.Type = attr.Value
 		case "w":
 			s.W = attr.Value
-			if err != nil {
-				return
-			}
 		default:
 		}
 	}
@@ -1041,6 +1004,9 @@ func (s *StyleTabs) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				s.Tabs = append(s.Tabs, &v)
 			default:
 				err = d.Skip() // skip unsupported tags
+			}
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -1176,9 +1142,6 @@ func (s *StyleFramePr) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err
 		case "y":
 			s.Y = attr.Value
 		default:
-		}
-		if err != nil {
-			return
 		}
 	}
 	_, err = d.Token()
@@ -1964,7 +1927,6 @@ type StyleStyle struct {
 
 // UnmarshalXML...
 func (s *StyleStyle) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var err error
 	for _, attr := range start.Attr {
 		if attr.Value == "" {
 			continue
@@ -1979,9 +1941,6 @@ func (s *StyleStyle) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 		case "customStyle":
 			s.CustomStyle = attr.Value
 		default:
-		}
-		if err != nil {
-			return nil
 		}
 	}
 	for {

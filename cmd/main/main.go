@@ -30,7 +30,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fumiama/go-docx"
+	"github.com/pduveau/go-docx"
 )
 
 func main() {
@@ -109,10 +109,10 @@ func main() {
 
 		w.AddParagraph()
 
-		tbl1 := w.AddTable(9, 9, 0, nil)
-		for x, r := range tbl1.TableRows {
+		tbl1 := w.AddTable(9, 9, 0)
+		for x, r := range tbl1.Rows {
 			red := (x + 1) * 28
-			for y, c := range r.TableCells {
+			for y, c := range r.Cells {
 				green := ((y + 1) / 3) * 85
 				blue := (y%3 + 1) * 85
 				v := fmt.Sprintf("%02X%02X%02X", red, green, blue)
@@ -122,15 +122,15 @@ func main() {
 
 		w.AddParagraph()
 
-		tbl2 := w.AddTableTwips([]int64{2333, 2333, 2333}, []int64{2333, 2333}, 0, nil).Justification("center")
-		for x, r := range tbl2.TableRows {
+		tbl2 := w.AddTableTwips([]int{2333, 2333, 2333}, []int{2333, 2333}, 0).Justification("center")
+		for x, r := range tbl2.Rows {
 			r.Justification("center")
-			for y, c := range r.TableCells {
-				c.TableCellProperties.VAlign = &docx.WVerticalAlignment{Val: "center"}
+			for y, c := range r.Cells {
+				c.Properties.VAlign = &docx.WVerticalAlignment{Val: "center"}
 				c.AddParagraph().Justification("center").AddText(fmt.Sprintf("(%d, %d)", x, y))
 			}
 		}
-		tbl2.TableRows[0].TableCells[0].Shade("clear", "auto", "E7E6E6")
+		tbl2.Rows[0].Cells[0].Shade("clear", "auto", "E7E6E6")
 
 		p := w.AddParagraph().Justification("center")
 		p.AddText("测试 AutoShape w:ln").Size("44")
@@ -191,8 +191,8 @@ func main() {
 			case *docx.Paragraph: // printable
 				o.Properties = nil
 			case *docx.Table: // printable
-				for _, tr := range o.TableRows {
-					for _, tc := range tr.TableCells {
+				for _, tr := range o.Rows {
+					for _, tc := range tr.Cells {
 						for _, p := range tc.Paragraphs {
 							p.Properties = nil
 						}

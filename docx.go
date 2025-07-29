@@ -233,12 +233,22 @@ func (f *Docx) FindItemIndex(filter *regexp.Regexp) (int, []string) {
 	return -1, []string{}
 }
 
+type Insertable interface {
+	LinkToDoc(f *Docx)
+}
+
 // insert indepent item(s) at position.
 // if position is < 0 or larger then the document Items array then the item(s) are appended at the end
 // return the position to the next item after insertion or -1 if nothing inserted
+// WARNING : once inserted it cannot be inserted in another document
 func (f *Docx) InsertAt(position int, items ...interface{}) int {
 	if len(items) == 0 {
 		return -1
+	}
+	for _, item := range items {
+		if v, ok := item.(Insertable); ok {
+			v.LinkToDoc(f)
+		}
 	}
 	if position < 0 || position >= len(f.Document.Body.Items) {
 		f.Document.Body.Items = append(f.Document.Body.Items, items...)
@@ -261,6 +271,11 @@ func (f *Docx) InsertAt(position int, items ...interface{}) int {
 func (f *Docx) ReplaceAt(position, length int, items ...interface{}) int {
 	if len(items) == 0 {
 		return -1
+	}
+	for _, item := range items {
+		if v, ok := item.(Insertable); ok {
+			v.LinkToDoc(f)
+		}
 	}
 	if position < 0 || position >= len(f.Document.Body.Items) {
 		f.Document.Body.Items = append(f.Document.Body.Items, items...)

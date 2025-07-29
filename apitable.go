@@ -29,11 +29,7 @@ import (
 // AddTable add a new table to body by col*row
 //
 // unit: twips (1/20 point)
-func (f *Docx) AddTable(
-	row int,
-	col int,
-	tableWidth int,
-) *Table {
+func (f *Docx) AddTable(row int, col int, tableWidth int) *Table {
 	tbl := &Table{
 		Properties: &WTableProperties{
 			Look: &WTableLook{
@@ -42,13 +38,14 @@ func (f *Docx) AddTable(
 		},
 		Grid: &WTableGrid{},
 		Rows: make([]*WTableRow, row),
+		file: f,
 	}
 
 	for i := range tbl.Rows {
 		tbl.Rows[i] = &WTableRow{
 			Properties: &WTableRowProperties{},
 			Cells:      make([]*WTableCell, col),
-			table:      tbl,
+			file:       f,
 		}
 		for j := range tbl.Rows[i].Cells {
 			tbl.Rows[i].Cells[j] = &WTableCell{
@@ -56,7 +53,6 @@ func (f *Docx) AddTable(
 					Width: &WTableCellWidth{Type: "auto"},
 				},
 				file: f,
-				row:  tbl.Rows[i],
 			}
 		}
 	}
@@ -78,6 +74,7 @@ func (f *Docx) AddTableEmpty() *Table {
 		},
 		Grid: &WTableGrid{},
 		Rows: make([]*WTableRow, 0),
+		file: f,
 	}
 
 	tbl.Style("TableGrid", 0)
@@ -86,7 +83,9 @@ func (f *Docx) AddTableEmpty() *Table {
 	return tbl
 }
 
-func (f *Docx) NewTableEmpty() *Table {
+// NewTableEmptyUnlinked creates a fully independent table that can be inserted later
+// Pictures or Hyperlinks CANNOT be inserted until linked to a document
+func NewTableEmptyUnlinked() *Table {
 	tbl := &Table{
 		Properties: &WTableProperties{
 			Look: &WTableLook{
@@ -102,14 +101,28 @@ func (f *Docx) NewTableEmpty() *Table {
 	return tbl
 }
 
+// NewTableEmptyUnlinked creates a a non indoc table that can be inserted later
+func (f *Docx) NewTableEmpty() *Table {
+	tbl := NewTableEmptyUnlinked()
+	tbl.file = f
+	return tbl
+}
+
+// link the table to a document in order to insert Pictures or Hyperlinks in embeded paragraph
+func (t *Table) LinkToDoc(f *Docx) {
+	t.file = f
+	for _, r := range t.Rows {
+		r.file = f
+		for _, c := range r.Cells {
+			c.file = f
+		}
+	}
+}
+
 // AddTableTwips add a new table to body by height and width
 //
 // unit: twips (1/20 point)
-func (f *Docx) AddTableTwips(
-	rowHeights []int,
-	colWidths []int,
-	tableWidth int,
-) *Table {
+func (f *Docx) AddTableTwips(rowHeights []int, colWidths []int, tableWidth int) *Table {
 	tbl := &Table{
 		Properties: &WTableProperties{
 			Look: &WTableLook{
@@ -120,6 +133,7 @@ func (f *Docx) AddTableTwips(
 			GridCols: make([]*WGridCol, len(colWidths)),
 		},
 		Rows: make([]*WTableRow, len(rowHeights)),
+		file: f,
 	}
 
 	var total int = 0
@@ -139,13 +153,13 @@ func (f *Docx) AddTableTwips(
 		tbl.Rows[i] = &WTableRow{
 			Properties: &WTableRowProperties{},
 			Cells:      make([]*WTableCell, len(colWidths)),
+			file:       f,
 		}
 		for j, w := range colWidths {
 			tbl.Rows[i].Cells[j] = &WTableCell{
 				Properties: &WTableCellProperties{
 					Width: &WTableCellWidth{W: w, Type: "dxa"},
 				},
-				row:  tbl.Rows[i],
 				file: f,
 			}
 		}
@@ -403,7 +417,6 @@ func (t *Table) Merge(firstRow, lastRow, firstCol, lastCol int) *Table {
 						switch c.Properties.Width.Type {
 						case "auto":
 							w = -1
-							break
 						case "dxa":
 							w += c.Properties.Width.W
 						}
@@ -447,6 +460,7 @@ func (t *Table) AddRow(position ...int) *WTableRow {
 	v := &WTableRow{
 		Properties: &WTableRowProperties{},
 		Cells:      make([]*WTableCell, 0),
+		file:       t.file,
 	}
 	if len(position) > 0 && position[0] >= 0 && position[0] < len(t.Rows) {
 		t.Rows = slices.Insert(t.Rows, position[0], v)
@@ -476,7 +490,7 @@ func (r *WTableRow) AddCell(position_span ...int) *WTableCell {
 				Type: "auto",
 			},
 		},
-		row: r,
+		file: r.file,
 	}
 
 	switch len(position_span) {

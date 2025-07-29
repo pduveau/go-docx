@@ -30,34 +30,26 @@ import (
 
 func TestTableStructure(t *testing.T) {
 
-	borderColors := &APITableBorderColors{
-		"#ff0000",
-		"#ff0000",
-		"#ff0000",
-		"#ff0000",
-		"#ff0000",
-		"",
-	}
-
 	w := New().WithDefaultTheme()
 	// add new paragraph
 	para1 := w.AddParagraph()
 	// add text
 	para1.AddText("table")
-	tab1 := w.AddTable(4, 3, 1000, borderColors).Justification("center")
-	tab1.TableProperties.Position = &WTablePositioningProperties{LeftFromText: 2333}
-	para2 := tab1.TableRows[3].Justification("center").TableCells[2].Shade("clear", "auto", "E7E6E6").AddParagraph()
+	tab1 := w.AddTable(4, 3, 1000).Justification("center")
+	tab1.Borders(TABLE_BORDER_EXTERN|TABLE_BORDER_INSIDEH, "single", "#ff0000", 4, 0)
+	tab1.Properties.Position = &WTablePositioningProperties{LeftFromText: 2333}
+	para2 := tab1.Rows[3].Justification("center").Cells[2].Shade("clear", "auto", "E7E6E6").AddParagraph()
 	r, err := para2.AddAnchorDrawingFrom("testdata/fumiama.JPG")
 	if err != nil {
 		t.Fatal(err)
 	}
-	tab1.TableRows[0].TableCells[0].TableCellProperties.VMerge = &WvMerge{Val: "restart"}
-	tab1.TableRows[1].TableCells[0].TableCellProperties.VMerge = &WvMerge{}
-	tab1.TableRows[2].TableCells[0].TableCellProperties.VMerge = &WvMerge{}
+	tab1.Rows[0].Cells[0].Properties.VMerge = &WvMerge{Val: "restart"}
+	tab1.Rows[1].Cells[0].Properties.VMerge = &WvMerge{}
+	tab1.Rows[2].Cells[0].Properties.VMerge = &WvMerge{}
 	r.Children[0].(*Drawing).Anchor.Graphic.GraphicData.Pic.BlipFill.Blip.AlphaModFix = &AAlphaModFix{Amount: 50000}
 	r.Children[0].(*Drawing).Anchor.Graphic.GraphicData.Pic.NonVisualPicProperties.CNvPicPr.Locks = &APicLocks{NoChangeAspect: 1}
 	r.Children[0].(*Drawing).Anchor.Graphic.GraphicData.Pic.SpPr.Xfrm.Rot = 50000
-	para3 := tab1.TableRows[0].TableCells[0].AddParagraph()
+	para3 := tab1.Rows[0].Cells[0].AddParagraph()
 	para3.AddText("first cell")
 
 	f, err := os.Create("TestMarshalTableStructure.xml")

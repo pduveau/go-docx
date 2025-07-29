@@ -20,12 +20,24 @@
 
 package docx
 
-// CreateParagrah creates an independent paragraph that can be inserted later
+// CreateParagrah creates a non indoc paragraph that can be inserted later
 func (f *Docx) NewParagraph() *Paragraph {
+	p := NewParagraphUnlinked()
+	p.file = f
+	return p
+}
+
+// CreateParagrah creates a fully independent paragraph that can be inserted later
+// Pictures or Hyperlinks CANNOT be inserted until linked to a document
+func NewParagraphUnlinked() *Paragraph {
 	return &Paragraph{
 		Children: make([]interface{}, 0, 64),
-		file:     f,
 	}
+}
+
+// link the paragrap to a document in order to insert Pictures or Hyperlinks
+func (p *Paragraph) LinkToDoc(f *Docx) {
+	p.file = f
 }
 
 // AddParagraph adds a new paragraph

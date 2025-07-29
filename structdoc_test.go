@@ -38,9 +38,9 @@ func TestUnmarshalPlainStructure(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		doc := Document{
-			XMLW:    XMLNS_W,
-			XMLR:    XMLNS_R,
-			XMLWP:   XMLNS_WP,
+			XMLw:    XMLNS_W,
+			XMLr:    XMLNS_R,
+			XMLwp:   XMLNS_WP,
 			XMLName: xml.Name{Space: XMLNS_W, Local: "document"}}
 		err := xml.Unmarshal(StringToBytes(tc.content), &doc)
 		if err != nil {
@@ -64,7 +64,7 @@ func TestUnmarshalPlainStructure(t *testing.T) {
 					}
 				}
 			case *SectionProperties:
-				if v.PgSz.W != 11906 || v.PgSz.H != 16838 {
+				if v.PageSize.W != 11906 || v.PageSize.H != 16838 {
 					t.Fatalf("We were not able to parse SectionProperties")
 				}
 			}

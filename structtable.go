@@ -72,7 +72,7 @@ func (t *Table) String() string {
 
 func (t *Table) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 
-	if t.Rows == nil || len(t.Rows) == 0 {
+	if len(t.Rows) == 0 {
 		return nil
 	}
 
@@ -95,7 +95,7 @@ func (t *Table) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 			}
 		}
 
-		if r.Cells != nil && len(r.Cells) > 0 {
+		if len(r.Cells) > 0 {
 			ov := 0
 
 			for j, c := range r.Cells {
@@ -195,9 +195,6 @@ func (t *Table) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 					return err
 				}
 				t.Rows = append(t.Rows, &value)
-				for _, r := range t.Rows {
-					r.table = t
-				}
 			case "tblPr":
 				t.Properties = new(WTableProperties)
 				err = d.DecodeElement(t.Properties, &tt)
@@ -536,8 +533,7 @@ type WTableRow struct {
 	Properties *WTableRowProperties
 	Cells      []*WTableCell
 
-	file  *Docx
-	table *Table
+	file *Docx
 }
 
 // UnmarshalXML ...
@@ -570,9 +566,6 @@ func (w *WTableRow) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 					return err
 				}
 				w.Cells = append(w.Cells, &value)
-				for _, c := range w.Cells {
-					c.row = w
-				}
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -736,7 +729,6 @@ type WTableCell struct {
 	Paragraphs []*Paragraph `xml:"w:p,omitempty"`
 	Tables     []*Table     `xml:"w:tbl,omitempty"`
 
-	row  *WTableRow
 	file *Docx
 }
 
