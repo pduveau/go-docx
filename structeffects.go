@@ -270,7 +270,7 @@ func (w *ShapeProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 
 // NonVisualProperties is an element that represents the non-visual properties of a content control.
 type NonVisualProperties struct {
-	ID   int    `xml:"id,attr"`
+	ID   uint64 `xml:"id,attr"`
 	Name string `xml:"name,attr"`
 }
 
@@ -279,7 +279,7 @@ func (r *NonVisualProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElemen
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "id":
-			r.ID, err = GetInt(attr.Value)
+			r.ID, err = GetUInt64(attr.Value)
 			if err != nil {
 				return
 			}

@@ -25,9 +25,13 @@ import (
 	"encoding/xml"
 	"errors"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var mediaFileRe = regexp.MustCompile(`^image(.*)\.(.*)$`)
+var docsFileRe = regexp.MustCompile(`^/word/[a-z]([0-9]+)\.xml$`)
 
 // unpack receives a zip file (word documents are a zip with multiple xml inside)
 // and parses the files that are relevant for us:
@@ -38,11 +42,18 @@ import (
 //
 // Then it stores all other files into tmpfslist for packing.
 func unpack(zipReader *zip.Reader) (docx *Docx, err error) {
+	var n uint64
 	docx = new(Docx)
 	docx.mediaNameIdx = make(map[string]int, 64)
-	docx.slowIDs = make(map[string]uintptr, 64)
+	docx.picturesId = 0
 	docx.tmplfs = zipReader
 	docx.tmpfslst = make([]string, 0, 64)
+	docx.rID = 3
+	docx.picturesPrefix = "Picture "
+	docx.shapesId = 0
+	docx.shapesPrefix = "Shape "
+	docx.imageID = 0
+
 	for _, f := range zipReader.File {
 		if f.Name == "word/_rels/document.xml.rels" {
 			err = docx.parseDocRelation(f)
@@ -66,17 +77,25 @@ func unpack(zipReader *zip.Reader) (docx *Docx, err error) {
 			continue
 		}
 		if strings.HasPrefix(f.Name, MEDIA_FOLDER) {
-			err = docx.parseMedia(f)
+			n, err = docx.parseMedia(f)
 			if err != nil {
 				return
 			}
+			if n > docx.imageID {
+				docx.imageID = n
+			}
 			continue
+		}
+
+		if docsFileRe.MatchString(f.Name) {
+			n, _ = strconv.ParseUint(string(mediaFileRe.FindStringSubmatch(f.Name)[1]), 10, 64)
+			if n > docx.docID {
+				docx.docID = n
+			}
 		}
 		// fill remaining files into tmpfslst
 		docx.tmpfslst = append(docx.tmpfslst, f.Name)
 	}
-	//TODO: find last imageID
-	docx.imageID = 100000
 	return
 }
 
@@ -91,19 +110,17 @@ func (f *Docx) parseDocument(file *zip.File) error {
 	f.Document.XMLw = XMLNS_W
 	f.Document.XMLr = XMLNS_R
 	f.Document.XMLwp = XMLNS_WP
-	// f.Document.XMLMC = XMLNS_MC
-	// f.Document.XMLO = XMLNS_O
-	// f.Document.XMLV = XMLNS_V
+	f.Document.XMLmc = XMLNS_MC
+	f.Document.XMLo = XMLNS_O
+	f.Document.XMLv = XMLNS_V
 	f.Document.XMLwps = XMLNS_WPS
 	f.Document.XMLwpc = XMLNS_WPC
 	f.Document.XMLwpg = XMLNS_WPG
-	// f.Document.XMLWP14 = XMLNS_WP14
+	f.Document.XMLwp14 = XMLNS_WP14
 	f.Document.XMLName.Space = XMLNS_W
 	f.Document.XMLName.Local = "document"
 
 	f.Document.Body.file = f
-	//TODO: find last docID
-	f.docID = 100000
 	err = xml.NewDecoder(zf).Decode(&f.Document)
 	return err
 }
@@ -149,17 +166,22 @@ func (f *Docx) parseDocRelation(file *zip.File) error {
 }
 
 // parseMedia add the media into Docx struct
-func (f *Docx) parseMedia(file *zip.File) error {
+func (f *Docx) parseMedia(file *zip.File) (id uint64, err error) {
+	var zf io.ReadCloser
 	name := file.Name[len(MEDIA_FOLDER):]
-	zf, err := file.Open()
+	zf, err = file.Open()
 	if err != nil {
-		return err
+		return
 	}
 	data, err := io.ReadAll(zf)
 	if err != nil {
-		return err
+		return
 	}
 	f.mediaNameIdx[name] = len(f.media)
+	if mediaFileRe.MatchString(name) {
+		id, _ = strconv.ParseUint(string(mediaFileRe.FindStringSubmatch(name)[1]), 10, 64)
+	}
 	f.media = append(f.media, Media{Name: name, Data: data})
-	return zf.Close()
+	err = zf.Close()
+	return
 }

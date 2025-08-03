@@ -93,7 +93,7 @@ func newEmptyFile() *Docx {
 		media:        make([]Media, 0, 64),
 		mediaNameIdx: make(map[string]int, 64),
 		rID:          3,
-		slowIDs:      make(map[string]uintptr, 64),
+		picturesId:   0,
 	}
 	docx.Document.Body.file = docx
 	return docx

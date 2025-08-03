@@ -20,15 +20,10 @@
 
 package docx
 
-import (
-	"strconv"
-	"sync/atomic"
-)
-
 // AddInlineShape adds wsp named drawing to paragraph
-func (p *Paragraph) AddInlineShape(w, h int64, name, bwMode, prst string, ln *ALine) *Run {
-	idn := int(atomic.AddUintptr(&p.file.docID, 1))
-	id := strconv.Itoa(int(p.file.IncreaseID(name)))
+func (p *Paragraph) AddInlineShape(w, h int64, bwMode, prst string, ln *ALine) *Run {
+	idn := p.file.increaseDocID()
+	name := p.file.increaseShapesID()
 	d := &Drawing{
 		Inline: &WPInline{
 			Extent: &WPExtent{
@@ -38,7 +33,7 @@ func (p *Paragraph) AddInlineShape(w, h int64, name, bwMode, prst string, ln *AL
 			EffectExtent: &WPEffectExtent{},
 			DocPr: &WPDocPr{
 				ID:   idn,
-				Name: name + " " + id,
+				Name: name,
 			},
 			CNvGraphicFramePr: &WPCNvGraphicFramePr{
 				Locks: AGraphicFrameLocks{XMLA: XMLNS_DRAWINGML_MAIN},
@@ -83,9 +78,9 @@ func (p *Paragraph) AddInlineShape(w, h int64, name, bwMode, prst string, ln *AL
 }
 
 // AddAnchorShape adds wsp named drawing to paragraph
-func (p *Paragraph) AddAnchorShape(w, h int64, name, bwMode, prst string, ln *ALine) *Run {
-	idn := int(atomic.AddUintptr(&p.file.docID, 1))
-	id := strconv.Itoa(int(p.file.IncreaseID(name)))
+func (p *Paragraph) AddAnchorShape(w, h int64, bwMode, prst string, ln *ALine) *Run {
+	idn := p.file.increaseDocID()
+	name := p.file.increaseShapesID()
 	d := &Drawing{
 		Anchor: &WPAnchor{
 			LayoutInCell: 1,
@@ -107,7 +102,7 @@ func (p *Paragraph) AddAnchorShape(w, h int64, name, bwMode, prst string, ln *AL
 			WrapNone:     &struct{}{},
 			DocPr: &WPDocPr{
 				ID:   idn,
-				Name: name + " " + id,
+				Name: name,
 			},
 			CNvGraphicFramePr: &WPCNvGraphicFramePr{
 				Locks: AGraphicFrameLocks{XMLA: XMLNS_DRAWINGML_MAIN},

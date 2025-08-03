@@ -3,6 +3,7 @@
    Copyright (c) 2021 Gonzalo Fernandez-Victorio
    Copyright (c) 2021 Basement Crowd Ltd (https://www.basementcrowd.com)
    Copyright (c) 2023 Fumiama Minamoto (源文雨)
+   Copyright (c) 2025 Philippe Duveau
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published
@@ -22,24 +23,22 @@ package docx
 
 import (
 	"bytes"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
-	"strconv"
-	"sync/atomic"
-
-	"github.com/fumiama/imgsz"
 )
 
 // AddInlineDrawing adds inline drawing to paragraph
 func (p *Paragraph) AddInlineDrawing(pic []byte) (*Run, error) {
-	sz, format, err := imgsz.DecodeSize(bytes.NewReader(pic))
+	img, format, err := image.Decode(bytes.NewReader(pic))
 	if err != nil {
 		return nil, err
 	}
-	idn := int(atomic.AddUintptr(&p.file.docID, 1))
-	id := int(p.file.IncreaseID("pictures"))
-	ids := strconv.Itoa(id)
+	id, name := p.file.increasePictureID()
 	rid := p.file.addImage(format, pic)
-	w, h := int64(sz.Width), int64(sz.Height)
+	w, h := int64(img.Bounds().Dx()), int64(img.Bounds().Dy())
 	if float64(w)/float64(h) > 1.2 {
 		h = A4_EMU_MAX_WIDTH * h / w
 		w = A4_EMU_MAX_WIDTH
@@ -58,8 +57,8 @@ func (p *Paragraph) AddInlineDrawing(pic []byte) (*Run, error) {
 			},
 			EffectExtent: &WPEffectExtent{},
 			DocPr: &WPDocPr{
-				ID:   idn,
-				Name: p.file.pictures_prefix + ids,
+				ID:   id,
+				Name: name,
 			},
 			CNvGraphicFramePr: &WPCNvGraphicFramePr{
 				Locks: AGraphicFrameLocks{
@@ -76,7 +75,7 @@ func (p *Paragraph) AddInlineDrawing(pic []byte) (*Run, error) {
 						NonVisualPicProperties: &PICNonVisualPicProperties{
 							NonVisualDrawingProperties: NonVisualProperties{
 								ID:   id,
-								Name: p.file.pictures_prefix + ids,
+								Name: name,
 							},
 						},
 						BlipFill: &PICBlipFill{
@@ -134,15 +133,13 @@ func (r *WPInline) Size(w, h int64) {
 
 // AddAnchorDrawing adds inline drawing to paragraph
 func (p *Paragraph) AddAnchorDrawing(pic []byte) (*Run, error) {
-	sz, format, err := imgsz.DecodeSize(bytes.NewReader(pic))
+	img, format, err := image.Decode(bytes.NewReader(pic))
 	if err != nil {
 		return nil, err
 	}
-	idn := int(atomic.AddUintptr(&p.file.docID, 1))
-	id := int(p.file.IncreaseID("pictures"))
-	ids := strconv.Itoa(id)
+	id, name := p.file.increasePictureID()
 	rid := p.file.addImage(format, pic)
-	w, h := int64(sz.Width), int64(sz.Height)
+	w, h := int64(img.Bounds().Dx()), int64(img.Bounds().Dy())
 	if float64(w)/float64(h) > 1.2 {
 		h = A4_EMU_MAX_WIDTH * h / w
 		w = A4_EMU_MAX_WIDTH
@@ -170,8 +167,8 @@ func (p *Paragraph) AddAnchorDrawing(pic []byte) (*Run, error) {
 			EffectExtent: &WPEffectExtent{},
 			WrapNone:     &struct{}{},
 			DocPr: &WPDocPr{
-				ID:   idn,
-				Name: p.file.pictures_prefix + ids,
+				ID:   id,
+				Name: name,
 			},
 			CNvGraphicFramePr: &WPCNvGraphicFramePr{
 				Locks: AGraphicFrameLocks{
@@ -188,7 +185,7 @@ func (p *Paragraph) AddAnchorDrawing(pic []byte) (*Run, error) {
 						NonVisualPicProperties: &PICNonVisualPicProperties{
 							NonVisualDrawingProperties: NonVisualProperties{
 								ID:   id,
-								Name: p.file.pictures_prefix + ids,
+								Name: name,
 							},
 						},
 						BlipFill: &PICBlipFill{

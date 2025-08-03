@@ -368,7 +368,7 @@ newdoclop:
 
 		// migrate base data
 		ndoc.mediaNameIdx = make(map[string]int, 64)
-		ndoc.slowIDs = make(map[string]uintptr, 64)
+		ndoc.picturesId = 0
 		ndoc.template = f.template
 		ndoc.tmplfs = f.tmplfs
 		ndoc.tmpfslst = f.tmpfslst

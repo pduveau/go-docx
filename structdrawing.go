@@ -25,9 +25,7 @@ import (
 	"encoding/hex"
 	"encoding/xml"
 	"io"
-	"strconv"
 	"strings"
-	"sync/atomic"
 )
 
 //nolint:revive,stylecheck
@@ -291,9 +289,8 @@ func (r *WPInline) copymedia(to *Docx) *WPInline { //nolint: dupl
 				return nil
 			}
 			format := tgt[strings.LastIndex(tgt, ".")+1:]
-			idn := int(atomic.AddUintptr(&to.docID, 1))
-			id := int(to.IncreaseID("pictures"))
-			ids := strconv.Itoa(id)
+			idn := to.increaseDocID()
+			id, name := to.increasePictureID()
 			m := r.file.Media(tgt[6:])
 			if m == nil {
 				return nil
@@ -312,12 +309,12 @@ func (r *WPInline) copymedia(to *Docx) *WPInline { //nolint: dupl
 
 			inln.DocPr = &WPDocPr{
 				ID:   idn,
-				Name: r.file.pictures_prefix + ids,
+				Name: name,
 			}
 			pic.NonVisualPicProperties = &PICNonVisualPicProperties{
 				NonVisualDrawingProperties: NonVisualProperties{
 					ID:   id,
-					Name: r.file.pictures_prefix + ids,
+					Name: name,
 				},
 				CNvPicPr: r.Graphic.GraphicData.Pic.NonVisualPicProperties.CNvPicPr,
 			}
@@ -404,7 +401,7 @@ func (r *WPEffectExtent) UnmarshalXML(d *xml.Decoder, start xml.StartElement) er
 // WPDocPr represents the document properties of a drawing in a Word document.
 type WPDocPr struct {
 	XMLName xml.Name `xml:"wp:docPr,omitempty"`
-	ID      int      `xml:"id,attr"`
+	ID      uint64   `xml:"id,attr"`
 	Name    string   `xml:"name,attr,omitempty"`
 }
 
@@ -413,7 +410,7 @@ func (r *WPDocPr) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	for _, attr := range start.Attr {
 		switch attr.Name.Local {
 		case "id":
-			id, err := GetInt(attr.Value)
+			id, err := GetUInt64(attr.Value)
 			if err != nil {
 				return err
 			}
@@ -687,7 +684,7 @@ func (p *PICNonVisualPicProperties) UnmarshalXML(d *xml.Decoder, _ xml.StartElem
 				if v == "" {
 					continue
 				}
-				p.NonVisualDrawingProperties.ID, err = GetInt(v)
+				p.NonVisualDrawingProperties.ID, err = GetUInt64(v)
 				if err != nil {
 					return err
 				}
@@ -1381,9 +1378,8 @@ func (r *WPAnchor) copymedia(to *Docx) *WPAnchor { //nolint: dupl
 				return nil
 			}
 			format := tgt[strings.LastIndex(tgt, ".")+1:]
-			idn := int(atomic.AddUintptr(&to.docID, 1))
-			id := int(to.IncreaseID("pictures"))
-			ids := strconv.Itoa(id)
+			idn := to.increaseDocID()
+			id, name := to.increasePictureID()
 			m := r.file.Media(tgt[6:])
 			if m == nil {
 				return nil
@@ -1402,12 +1398,12 @@ func (r *WPAnchor) copymedia(to *Docx) *WPAnchor { //nolint: dupl
 
 			anch.DocPr = &WPDocPr{
 				ID:   idn,
-				Name: r.file.pictures_prefix + ids,
+				Name: name,
 			}
 			pic.NonVisualPicProperties = &PICNonVisualPicProperties{
 				NonVisualDrawingProperties: NonVisualProperties{
 					ID:   id,
-					Name: r.file.pictures_prefix + ids,
+					Name: name,
 				},
 				CNvPicPr: r.Graphic.GraphicData.Pic.NonVisualPicProperties.CNvPicPr,
 			}

@@ -29,7 +29,8 @@ import (
 	"io/fs"
 	"os"
 	"regexp"
-	"sync"
+	"strconv"
+	"sync/atomic"
 )
 
 // Docx is the structure that allow to access the internal represntation
@@ -44,13 +45,15 @@ type Docx struct {
 	media        []Media
 	mediaNameIdx map[string]int
 
-	rID       uintptr
-	imageID   uintptr
-	docID     uintptr
-	slowIDs   map[string]uintptr
-	slowIDsMu sync.Mutex
+	rID     uintptr
+	imageID uint64
+	docID   uint64
 
-	pictures_prefix string
+	picturesPrefix string
+	picturesId     uint64
+
+	shapesPrefix string
+	shapesId     uint64
 
 	template string
 	tmplfs   fs.FS
@@ -66,10 +69,11 @@ func New() *Docx {
 	return newEmptyFile()
 }
 
-// Set the picture prefix in order to name them for a table of pictures
+// Set the picture and shpaes prefixes in order to name them for a table of pictures
 // must be set before adding drawings
-func (f *Docx) SetPicturePrefix(prefix string) {
-	f.pictures_prefix = prefix + " "
+func (f *Docx) SetPPrefixex(pictures, shapes string) {
+	f.picturesPrefix = pictures + " "
+	f.shapesPrefix = shapes + " "
 }
 
 // Parse generates a new docx file in memory from a reader
@@ -176,17 +180,48 @@ func LoadBodyItems(items []interface{}, media []Media) *Docx {
 				},
 			},
 		},
-		media:        media,
-		mediaNameIdx: make(map[string]int, 64),
-		rID:          3,
-		slowIDs:      make(map[string]uintptr, 64),
+		media:          media,
+		mediaNameIdx:   make(map[string]int, 64),
+		rID:            3,
+		picturesId:     0,
+		picturesPrefix: "Picture ",
+		shapesId:       0,
+		shapesPrefix:   "Shape ",
+		imageID:        0,
 	}
 	doc.Document.Body.file = doc
 	for i, m := range media {
 		doc.mediaNameIdx[m.Name] = i
 	}
-	doc.slowIDs["pictures"] = uintptr(len(media) + 1)
+	atomic.StoreUint64(&doc.picturesId, uint64(len(media)+1))
 	return doc
+}
+
+// addImage add image to docx and return its rId
+func (f *Docx) addImage(format string, data []byte) string {
+	m := Media{Name: "image" + strconv.FormatUint(atomic.AddUint64(&f.imageID, 1), 10) + "." + format, Data: data}
+	f.addMedia(m)
+	return f.addImageRelation(m)
+}
+
+// increaseDocID
+func (f *Docx) increaseDocID() (n uint64) {
+	n = atomic.AddUint64(&f.docID, 1)
+	return
+}
+
+// IncreasePicturesID
+func (f *Docx) increasePictureID() (id uint64, name string) {
+	id = atomic.AddUint64(&f.picturesId, 1)
+	name = f.picturesPrefix + strconv.FormatUint(id, 10)
+	return
+}
+
+// increaseShapesID
+func (f *Docx) increaseShapesID() (name string) {
+	id := atomic.AddUint64(&f.shapesId, 1)
+	name = f.shapesPrefix + strconv.FormatUint(id, 10)
+	return
 }
 
 // WriteTo allows to save a docx to a writer

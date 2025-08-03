@@ -134,7 +134,7 @@ func main() {
 
 		p := w.AddParagraph().Justification("center")
 		p.AddText("测试 AutoShape w:ln").Size("44")
-		_ = p.AddAnchorShape(808355, 238760, "AutoShape", "auto", "straightConnector1",
+		_ = p.AddAnchorShape(808355, 238760, "auto", "straightConnector1",
 			&docx.ALine{
 				W:         9525,
 				SolidFill: &docx.ASolidFill{SrgbClr: &docx.ASrgbClr{Val: "000000"}},
@@ -143,7 +143,7 @@ func main() {
 				TailEnd:   &docx.ATailEnd{},
 			},
 		)
-		_ = p.AddInlineShape(808355, 238760, "AutoShape", "auto", "straightConnector1",
+		_ = p.AddInlineShape(808355, 238760, "auto", "straightConnector1",
 			&docx.ALine{
 				W:         9525,
 				SolidFill: &docx.ASolidFill{SrgbClr: &docx.ASrgbClr{Val: "000000"}},

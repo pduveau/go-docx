@@ -68,3 +68,17 @@ func GetInt(s string) (int, error) {
 	_, err = fmt.Sscanf(s, "%d", &v)
 	return v, err
 }
+
+// GetInt from string
+func GetUInt64(s string) (uint64, error) {
+	v, err := strconv.ParseUint(s, 10, 64)
+	if err == nil {
+		return v, nil
+	}
+	v2, err := strconv.ParseFloat(s, 64)
+	if err == nil {
+		return uint64(v2), nil
+	}
+	_, err = fmt.Sscanf(s, "%d", &v)
+	return v, err
+}

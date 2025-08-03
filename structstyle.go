@@ -23,185 +23,37 @@ import (
 	"strings"
 )
 
-func getVal(atts []xml.Attr) string {
+func getVal(atts []xml.Attr) *StyleVal {
 	for _, at := range atts {
 		if at.Name.Local == "val" {
-			return at.Value
+			return &StyleVal{Val: at.Value}
 		}
 	}
-	return ""
+	return &StyleVal{}
+}
+
+func getW14Val(atts []xml.Attr) *StyleW14Val {
+	for _, at := range atts {
+		if at.Name.Local == "val" {
+			return &StyleW14Val{Val: at.Value}
+		}
+	}
+	return &StyleW14Val{}
 }
 
 func trapExpectedError(err error) bool {
 	return err != nil && !strings.HasPrefix(err.Error(), "expected")
 }
 
-// types that do not require UnmarshalXML methods
-type StyleAutoRedefine struct {
-	XMLName xml.Name `xml:"w:autoRedefine,omitempty"`
-}
-type StyleContextualSpacing struct {
-	XMLName xml.Name `xml:"w:contextualSpacing,omitempty"`
-}
-type StyleHidden struct {
-	XMLName xml.Name `xml:"w:hidden,omitempty"`
-}
-type StyleKeepLines struct {
-	XMLName xml.Name `xml:"w:keepLines,omitempty"`
-}
-type StyleLocked struct {
-	XMLName xml.Name `xml:"w:locked,omitempty"`
-}
-type StyleNoProof struct {
-	XMLName xml.Name `xml:"w:noProof,omitempty"`
-}
-type StyleQFormat struct {
-	XMLName xml.Name `xml:"w:qFormat,omitempty"`
-}
-type StyleSemiHidden struct {
-	XMLName xml.Name `xml:"w:semiHidden,omitempty"`
-}
-type StyleSmallCaps struct {
-	XMLName xml.Name `xml:"w:smallCaps,omitempty"`
-}
-type StyleCaps struct {
-	XMLName xml.Name `xml:"w:caps,omitempty"`
-}
-type StyleUnhideWhenUsed struct {
-	XMLName xml.Name `xml:"w:unhideWhenUsed,omitempty"`
-}
-type StyleVanish struct {
-	XMLName xml.Name `xml:"w:vanish,omitempty"`
-}
+var emptyStruct = &StyleVal{}
 
 // types that has attr Val only and require getAtt
-type StyleAliases struct {
-	XMLName xml.Name `xml:"w:aliases,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
+type StyleVal struct {
+	Val string `xml:"w:val,attr,omitempty"`
 }
-type StyleAutoSpaceDE struct {
-	XMLName xml.Name `xml:"w:autoSpaceDE,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleAutoSpaceDN struct {
-	XMLName xml.Name `xml:"w:autoSpaceDN,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleAdjustRightInd struct {
-	XMLName xml.Name `xml:"w:adjustRightInd,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleB struct {
-	XMLName xml.Name `xml:"w:b,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleBCs struct {
-	XMLName xml.Name `xml:"w:bCs,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleI struct {
-	XMLName xml.Name `xml:"w:i,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleICs struct {
-	XMLName xml.Name `xml:"w:iCs,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleU struct {
-	XMLName xml.Name `xml:"w:u,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleUCs struct {
-	XMLName xml.Name `xml:"w:uCs,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleBasedOn struct {
-	XMLName xml.Name `xml:"w:basedOn,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleIlvl struct {
-	XMLName xml.Name `xml:"w:ilvl,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleJc struct {
-	XMLName xml.Name `xml:"w:jc,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleKeepNext struct {
-	XMLName xml.Name `xml:"w:keepNext,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleKern struct {
-	XMLName xml.Name `xml:"w:kern,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleLigatures struct {
-	XMLName xml.Name `xml:"w14:ligatures,omitempty"`
-	Val     string   `xml:"w14:val,attr,omitempty"`
-}
-type StyleLink struct {
-	XMLName xml.Name `xml:"w:link,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleName struct {
-	XMLName xml.Name `xml:"w:name,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleNext struct {
-	XMLName xml.Name `xml:"w:next,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleNumID struct {
-	XMLName xml.Name `xml:"w:numId,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleOutlineLvl struct {
-	XMLName xml.Name `xml:"w:outlineLvl,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleRsid struct {
-	XMLName xml.Name `xml:"w:rsid,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StylePosition struct {
-	XMLName xml.Name `xml:"w:position,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleSnapToGrid struct {
-	XMLName xml.Name `xml:"w:snapToGrid,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleSz struct {
-	XMLName xml.Name `xml:"w:sz,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleSzCs struct {
-	XMLName xml.Name `xml:"w:szCs,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleTblStyleRowBandSize struct {
-	XMLName xml.Name `xml:"w:tblStyleRowBandSize,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleTblStyleColBandSize struct {
-	XMLName xml.Name `xml:"w:tblStyleColBandSize,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleUiPriority struct {
-	XMLName xml.Name `xml:"w:uiPriority,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleVertAlign struct {
-	XMLName xml.Name `xml:"w:vertAlign,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleVAlign struct {
-	XMLName xml.Name `xml:"w:vAlign,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
-}
-type StyleWidowControl struct {
-	XMLName xml.Name `xml:"w:widowControl,omitempty"`
-	Val     string   `xml:"w:val,attr,omitempty"`
+
+type StyleW14Val struct {
+	Val string `xml:"w14:val,attr,omitempty"`
 }
 
 // composed high level structs
@@ -334,22 +186,21 @@ func (s *StyleColor) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 	return err
 }
 
-type StyleBorderTop struct {
-	XMLName    xml.Name `xml:"w:top,omitempty"`
-	Val        string   `xml:"w:val,attr,omitempty"`
-	Sz         string   `xml:"w:sz,attr,omitempty"`
-	Space      string   `xml:"w:space,attr,omitempty"`
-	Color      string   `xml:"w:color,attr,omitempty"`
-	ThemeColor string   `xml:"w:themeColor,attr,omitempty"`
-	ThemeShade string   `xml:"w:themeShade,attr,omitempty"`
-	ThemeTint  string   `xml:"w:themeTint,attr,omitempty"`
-	W          string   `xml:"w:w,attr,omitempty"`
-	Type       string   `xml:"w:type,attr,omitempty"`
-	Shadow     string   `xml:"w:shadow,attr,omitempty"`
+type StyleBorder struct {
+	Val        string `xml:"w:val,attr,omitempty"`
+	Sz         string `xml:"w:sz,attr,omitempty"`
+	Space      string `xml:"w:space,attr,omitempty"`
+	Color      string `xml:"w:color,attr,omitempty"`
+	ThemeColor string `xml:"w:themeColor,attr,omitempty"`
+	ThemeShade string `xml:"w:themeShade,attr,omitempty"`
+	ThemeTint  string `xml:"w:themeTint,attr,omitempty"`
+	W          string `xml:"w:w,attr,omitempty"`
+	Type       string `xml:"w:type,attr,omitempty"`
+	Shadow     string `xml:"w:shadow,attr,omitempty"`
 }
 
 // UnmarshalXML...
-func (s *StyleBorderTop) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (s *StyleBorder) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	for _, attr := range start.Attr {
 		if attr.Value == "" {
 			continue
@@ -382,326 +233,13 @@ func (s *StyleBorderTop) UnmarshalXML(d *xml.Decoder, start xml.StartElement) er
 	return err
 }
 
-type StyleBorderBottom struct {
-	XMLName    xml.Name `xml:"w:bottom,omitempty"`
-	Val        string   `xml:"w:val,attr,omitempty"`
-	Sz         string   `xml:"w:sz,attr,omitempty"`
-	Space      string   `xml:"w:space,attr,omitempty"`
-	Color      string   `xml:"w:color,attr,omitempty"`
-	ThemeColor string   `xml:"w:themeColor,attr,omitempty"`
-	ThemeShade string   `xml:"w:themeShade,attr,omitempty"`
-	ThemeTint  string   `xml:"w:themeTint,attr,omitempty"`
-	W          string   `xml:"w:w,attr,omitempty"`
-	Type       string   `xml:"w:type,attr,omitempty"`
-	Shadow     string   `xml:"w:shadow,attr,omitempty"`
+type StyleCellMar struct {
+	W    string `xml:"w:w,attr,omitempty"`
+	Type string `xml:"w:type,attr,omitempty"`
 }
 
 // UnmarshalXML...
-func (s *StyleBorderBottom) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "val":
-			s.Val = attr.Value
-		case "sz":
-			s.Sz = attr.Value
-		case "space":
-			s.Space = attr.Value
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		case "shadow":
-			s.Shadow = attr.Value
-		case "color":
-			s.Color = attr.Value
-		case "themeColor":
-			s.ThemeColor = attr.Value
-		case "themeShade":
-			s.ThemeShade = attr.Value
-		case "themeTint":
-			s.ThemeTint = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleBorderLeft struct {
-	XMLName    xml.Name `xml:"w:left,omitempty"`
-	Val        string   `xml:"w:val,attr,omitempty"`
-	Sz         string   `xml:"w:sz,attr,omitempty"`
-	Space      string   `xml:"w:space,attr,omitempty"`
-	Color      string   `xml:"w:color,attr,omitempty"`
-	ThemeColor string   `xml:"w:themeColor,attr,omitempty"`
-	ThemeShade string   `xml:"w:themeShade,attr,omitempty"`
-	ThemeTint  string   `xml:"w:themeTint,attr,omitempty"`
-	W          string   `xml:"w:w,attr,omitempty"`
-	Type       string   `xml:"w:type,attr,omitempty"`
-	Shadow     string   `xml:"w:shadow,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleBorderLeft) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "val":
-			s.Val = attr.Value
-		case "sz":
-			s.Sz = attr.Value
-		case "space":
-			s.Space = attr.Value
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		case "shadow":
-			s.Shadow = attr.Value
-		case "color":
-			s.Color = attr.Value
-		case "themeColor":
-			s.ThemeColor = attr.Value
-		case "themeShade":
-			s.ThemeShade = attr.Value
-		case "themeTint":
-			s.ThemeTint = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleBorderRight struct {
-	XMLName    xml.Name `xml:"w:right,omitempty"`
-	Val        string   `xml:"w:val,attr,omitempty"`
-	Sz         string   `xml:"w:sz,attr,omitempty"`
-	Space      string   `xml:"w:space,attr,omitempty"`
-	Color      string   `xml:"w:color,attr,omitempty"`
-	ThemeColor string   `xml:"w:themeColor,attr,omitempty"`
-	ThemeShade string   `xml:"w:themeShade,attr,omitempty"`
-	ThemeTint  string   `xml:"w:themeTint,attr,omitempty"`
-	W          string   `xml:"w:w,attr,omitempty"`
-	Type       string   `xml:"w:type,attr,omitempty"`
-	Shadow     string   `xml:"w:shadow,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleBorderRight) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "val":
-			s.Val = attr.Value
-		case "sz":
-			s.Sz = attr.Value
-		case "space":
-			s.Space = attr.Value
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		case "shadow":
-			s.Shadow = attr.Value
-		case "color":
-			s.Color = attr.Value
-		case "themeColor":
-			s.ThemeColor = attr.Value
-		case "themeShade":
-			s.ThemeShade = attr.Value
-		case "themeTint":
-			s.ThemeTint = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleInsideH struct {
-	XMLName    xml.Name `xml:"w:insideH,omitempty"`
-	Val        string   `xml:"w:val,attr,omitempty"`
-	Sz         string   `xml:"w:sz,attr,omitempty"`
-	Space      string   `xml:"w:space,attr,omitempty"`
-	Color      string   `xml:"w:color,attr,omitempty"`
-	ThemeColor string   `xml:"w:themeColor,attr,omitempty"`
-	ThemeShade string   `xml:"w:themeShade,attr,omitempty"`
-	ThemeTint  string   `xml:"w:themeTint,attr,omitempty"`
-	W          string   `xml:"w:w,attr,omitempty"`
-	Type       string   `xml:"w:type,attr,omitempty"`
-	Shadow     string   `xml:"w:shadow,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleInsideH) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "val":
-			s.Val = attr.Value
-		case "sz":
-			s.Sz = attr.Value
-		case "space":
-			s.Space = attr.Value
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		case "shadow":
-			s.Shadow = attr.Value
-		case "color":
-			s.Color = attr.Value
-		case "themeColor":
-			s.ThemeColor = attr.Value
-		case "themeShade":
-			s.ThemeShade = attr.Value
-		case "themeTint":
-			s.ThemeTint = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleInsideV struct {
-	XMLName    xml.Name `xml:"w:insideV,omitempty"`
-	Val        string   `xml:"w:val,attr,omitempty"`
-	Sz         string   `xml:"w:sz,attr,omitempty"`
-	Space      string   `xml:"w:space,attr,omitempty"`
-	Color      string   `xml:"w:color,attr,omitempty"`
-	ThemeColor string   `xml:"w:themeColor,attr,omitempty"`
-	ThemeShade string   `xml:"w:themeShade,attr,omitempty"`
-	ThemeTint  string   `xml:"w:themeTint,attr,omitempty"`
-	W          string   `xml:"w:w,attr,omitempty"`
-	Type       string   `xml:"w:type,attr,omitempty"`
-	Shadow     string   `xml:"w:shadow,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleInsideV) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "val":
-			s.Val = attr.Value
-		case "sz":
-			s.Sz = attr.Value
-		case "space":
-			s.Space = attr.Value
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		case "shadow":
-			s.Shadow = attr.Value
-		case "color":
-			s.Color = attr.Value
-		case "themeColor":
-			s.ThemeColor = attr.Value
-		case "themeShade":
-			s.ThemeShade = attr.Value
-		case "themeTint":
-			s.ThemeTint = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleMarginTop struct {
-	XMLName xml.Name `xml:"w:top,omitempty"`
-	W       string   `xml:"w:w,attr,omitempty"`
-	Type    string   `xml:"w:type,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleMarginTop) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleMarginBottom struct {
-	XMLName xml.Name `xml:"w:bottom,omitempty"`
-	W       string   `xml:"w:w,attr,omitempty"`
-	Type    string   `xml:"w:type,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleMarginBottom) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleMarginLeft struct {
-	XMLName xml.Name `xml:"w:left,omitempty"`
-	W       string   `xml:"w:w,attr,omitempty"`
-	Type    string   `xml:"w:type,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleMarginLeft) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	for _, attr := range start.Attr {
-		if attr.Value == "" {
-			continue
-		}
-		switch attr.Name.Local {
-		case "w":
-			s.W = attr.Value
-		case "type":
-			s.Type = attr.Value
-		default:
-		}
-	}
-	_, err := d.Token()
-	return err
-}
-
-type StyleMarginRight struct {
-	XMLName xml.Name `xml:"w:right,omitempty"`
-	W       string   `xml:"w:w,attr,omitempty"`
-	Type    string   `xml:"w:type,attr,omitempty"`
-}
-
-// UnmarshalXML...
-func (s *StyleMarginRight) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (s *StyleCellMar) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	for _, attr := range start.Attr {
 		if attr.Value == "" {
 			continue
@@ -776,9 +314,9 @@ func (s *StyleLang) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 }
 
 type StyleNumPr struct {
-	XMLName xml.Name `xml:"w:numPr,omitempty"`
-	Ilvl    *StyleIlvl
-	NumId   *StyleNumID
+	XMLName xml.Name  `xml:"w:numPr,omitempty"`
+	Ilvl    *StyleVal `xml:"w:ilvl,omitempty"`
+	NumId   *StyleVal `xml:"w:numId,omitempty"`
 }
 
 // UnmarshalXML
@@ -795,9 +333,9 @@ func (s *StyleNumPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "ilvl":
-				s.Ilvl = &StyleIlvl{Val: getAtt(tt.Attr, "val")}
+				s.Ilvl = getVal(tt.Attr)
 			case "numId":
-				s.NumId = &StyleNumID{Val: getAtt(tt.Attr, "val")}
+				s.NumId = getVal(tt.Attr)
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -1044,11 +582,11 @@ func (s *StyleBdr) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err err
 }
 
 type StylePBdr struct {
-	XMLName xml.Name `xml:"w:pBdr,omitempty"`
-	Top     *StyleBorderTop
-	Left    *StyleBorderLeft
-	Bottom  *StyleBorderBottom
-	Right   *StyleBorderRight
+	XMLName xml.Name     `xml:"w:pBdr,omitempty"`
+	Top     *StyleBorder `xml:"w:top,omitempty"`
+	Left    *StyleBorder `xml:"w:left,omitempty"`
+	Bottom  *StyleBorder `xml:"w:bottom,omitempty"`
+	Right   *StyleBorder `xml:"w:right,omitempty"`
 }
 
 // UnmarshalXML
@@ -1065,28 +603,28 @@ func (s *StylePBdr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "top":
-				var value StyleBorderTop
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Top = &value
 			case "bottom":
-				var value StyleBorderBottom
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Bottom = &value
 			case "left":
-				var value StyleBorderLeft
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Left = &value
 			case "right":
-				var value StyleBorderRight
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
@@ -1151,21 +689,21 @@ func (s *StyleFramePr) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err
 type StylePPr struct {
 	XMLName           xml.Name `xml:"w:pPr,omitempty"`
 	FramePr           *StyleFramePr
-	KeepNext          *StyleKeepNext
-	KeepLines         *StyleKeepLines
-	WidowControl      *StyleWidowControl
+	KeepNext          *StyleVal `xml:"w:keepNext,omitempty"`
+	KeepLines         *StyleVal `xml:"w:keepLines,omitempty"`
+	WidowControl      *StyleVal `xml:"w:widowControl,omitempty"`
 	NumPr             *StyleNumPr
 	PBdr              *StylePBdr
 	Shd               *StyleShd
 	Tabs              *StyleTabs
 	Spacing           *StyleSpacing
 	Ind               *StyleInd
-	Jc                *StyleJc
-	ContextualSpacing *StyleContextualSpacing
-	OutlineLvl        *StyleOutlineLvl
-	AutoSpaceDE       *StyleAutoSpaceDE
-	AutoSpaceDN       *StyleAutoSpaceDN
-	AdjustRightInd    *StyleAdjustRightInd
+	Jc                *StyleVal `xml:"w:jc,omitempty"`
+	ContextualSpacing *StyleVal `xml:"w:contextualSpacing,omitempty"`
+	OutlineLvl        *StyleVal `xml:"w:outlineLvl,omitempty"`
+	AutoSpaceDE       *StyleVal `xml:"w:autoSpaceDE,omitempty"`
+	AutoSpaceDN       *StyleVal `xml:"w:autoSpaceDN,omitempty"`
+	AdjustRightInd    *StyleVal `xml:"w:adjustRightInd,omitempty"`
 }
 
 // UnmarshalXML
@@ -1182,17 +720,17 @@ func (s *StylePPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "adjustRightInd":
-				s.AdjustRightInd = &StyleAdjustRightInd{Val: getAtt(tt.Attr, "val")}
+				s.AdjustRightInd = getVal(tt.Attr)
 			case "autoSpaceDE":
-				s.AutoSpaceDE = &StyleAutoSpaceDE{Val: getAtt(tt.Attr, "val")}
+				s.AutoSpaceDE = getVal(tt.Attr)
 			case "autoSpaceDN":
-				s.AutoSpaceDN = &StyleAutoSpaceDN{Val: getAtt(tt.Attr, "val")}
+				s.AutoSpaceDN = getVal(tt.Attr)
 			case "contextualSpacing":
-				s.ContextualSpacing = &StyleContextualSpacing{}
+				s.ContextualSpacing = emptyStruct
 			case "keepNext":
-				s.KeepNext = &StyleKeepNext{Val: getAtt(tt.Attr, "val")}
+				s.KeepNext = getVal(tt.Attr)
 			case "keepLines":
-				s.KeepLines = &StyleKeepLines{}
+				s.KeepLines = emptyStruct
 			case "framePr":
 				var value StyleFramePr
 				err = d.DecodeElement(&value, &tt)
@@ -1215,7 +753,7 @@ func (s *StylePPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				}
 				s.Shd = &value
 			case "jc":
-				s.Jc = &StyleJc{Val: getVal(tt.Attr)}
+				s.Jc = getVal(tt.Attr)
 			case "numPr":
 				var value StyleNumPr
 				err = d.DecodeElement(&value, &tt)
@@ -1224,9 +762,9 @@ func (s *StylePPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				}
 				s.NumPr = &value
 			case "widowControl":
-				s.WidowControl = &StyleWidowControl{Val: getAtt(tt.Attr, "val")}
+				s.WidowControl = getVal(tt.Attr)
 			case "outlineLvl":
-				s.OutlineLvl = &StyleOutlineLvl{Val: getAtt(tt.Attr, "val")}
+				s.OutlineLvl = getVal(tt.Attr)
 			case "pBdr":
 				var value StylePBdr
 				err = d.DecodeElement(&value, &tt)
@@ -1263,28 +801,28 @@ func (s *StylePPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 type StyleRPr struct {
 	XMLName    xml.Name `xml:"w:rPr,omitempty"`
 	RFonts     *StyleRFonts
-	B          *StyleB
-	BCs        *StyleBCs
-	I          *StyleI
-	ICs        *StyleICs
-	Caps       *StyleCaps
-	SmallCaps  *StyleSmallCaps
-	Vanish     *StyleVanish
+	B          *StyleVal `xml:"w:b,omitempty"`
+	BCs        *StyleVal `xml:"w:bCs,omitempty"`
+	I          *StyleVal `xml:"w:i,omitempty"`
+	ICs        *StyleVal `xml:"w:iCs,omitempty"`
+	Caps       *StyleVal `xml:"w:caps,omitempty"`
+	SmallCaps  *StyleVal `xml:"w:smallCaps,omitempty"`
+	Vanish     *StyleVal `xml:"w:vanish,omitempty"`
 	Color      *StyleColor
 	Spacing    *StyleSpacing
-	SnapToGrid *StyleSnapToGrid
-	U          *StyleU
-	UCs        *StyleUCs
-	Position   *StylePosition
-	NoProof    *StyleNoProof
-	Kern       *StyleKern
-	Sz         *StyleSz
-	SzCs       *StyleSzCs
+	SnapToGrid *StyleVal `xml:"w:snapToGrid,omitempty"`
+	U          *StyleVal `xml:"w:u,omitempty"`
+	UCs        *StyleVal `xml:"w:uCs,omitempty"`
+	Position   *StyleVal `xml:"w:position,omitempty"`
+	NoProof    *StyleVal `xml:"w:noProof,omitempty"`
+	Kern       *StyleVal `xml:"w:kern,omitempty"`
+	Sz         *StyleVal `xml:"w:sz,omitempty"`
+	SzCs       *StyleVal `xml:"w:szCs,omitempty"`
 	Shd        *StyleShd
 	Lang       *StyleLang
-	Ligatures  *StyleLigatures
+	Ligatures  *StyleW14Val `xml:"w14:ligatures,omitempty"`
 	Bdr        *StyleBdr
-	VertAlign  *StyleVertAlign
+	VertAlign  *StyleVal `xml:"w:vertAlign,omitempty"`
 }
 
 // UnmarshalXML
@@ -1301,25 +839,25 @@ func (s *StyleRPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "b":
-				s.B = &StyleB{Val: getAtt(tt.Attr, "val")}
+				s.B = getVal(tt.Attr)
 			case "bCs":
-				s.BCs = &StyleBCs{Val: getAtt(tt.Attr, "val")}
+				s.BCs = getVal(tt.Attr)
 			case "i":
-				s.I = &StyleI{Val: getAtt(tt.Attr, "val")}
+				s.I = getVal(tt.Attr)
 			case "iCs":
-				s.ICs = &StyleICs{Val: getAtt(tt.Attr, "val")}
+				s.ICs = getVal(tt.Attr)
 			case "u":
-				s.U = &StyleU{Val: getVal(tt.Attr)}
+				s.U = getVal(tt.Attr)
 			case "uCs":
-				s.UCs = &StyleUCs{Val: getVal(tt.Attr)}
+				s.UCs = getVal(tt.Attr)
 			case "caps":
-				s.Caps = &StyleCaps{}
+				s.Caps = emptyStruct
 			case "smallCaps":
-				s.SmallCaps = &StyleSmallCaps{}
+				s.SmallCaps = emptyStruct
 			case "noProof":
-				s.NoProof = &StyleNoProof{}
+				s.NoProof = emptyStruct
 			case "vanish":
-				s.Vanish = &StyleVanish{}
+				s.Vanish = emptyStruct
 			case "color":
 				var value StyleColor
 				err = d.DecodeElement(&value, &tt)
@@ -1329,9 +867,9 @@ func (s *StyleRPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				s.Color = &value
 				continue
 			case "kern":
-				s.Kern = &StyleKern{Val: getAtt(tt.Attr, "val")}
+				s.Kern = getVal(tt.Attr)
 			case "snapToGrid":
-				s.SnapToGrid = &StyleSnapToGrid{Val: getAtt(tt.Attr, "val")}
+				s.SnapToGrid = getVal(tt.Attr)
 			case "spacing":
 				var value StyleSpacing
 				err = d.DecodeElement(&value, &tt)
@@ -1341,11 +879,11 @@ func (s *StyleRPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				s.Spacing = &value
 				continue
 			case "sz":
-				s.Sz = &StyleSz{Val: getAtt(tt.Attr, "val")}
+				s.Sz = getVal(tt.Attr)
 			case "szCs":
-				s.SzCs = &StyleSzCs{Val: getAtt(tt.Attr, "val")}
+				s.SzCs = getVal(tt.Attr)
 			case "position":
-				s.Position = &StylePosition{Val: getAtt(tt.Attr, "val")}
+				s.Position = getVal(tt.Attr)
 			case "lang":
 				var value StyleLang
 				err = d.DecodeElement(&value, &tt)
@@ -1355,9 +893,9 @@ func (s *StyleRPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				s.Lang = &value
 				continue
 			case "ligatures":
-				s.Ligatures = &StyleLigatures{Val: getVal(tt.Attr)}
+				s.Ligatures = getW14Val(tt.Attr)
 			case "vertAlign":
-				s.VertAlign = &StyleVertAlign{Val: getVal(tt.Attr)}
+				s.VertAlign = getVal(tt.Attr)
 			case "rFonts":
 				var value StyleRFonts
 				err = d.DecodeElement(&value, &tt)
@@ -1394,13 +932,13 @@ func (s *StyleRPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 }
 
 type StyleTcBorders struct {
-	XMLName xml.Name `xml:"w:tcBorders,omitempty"`
-	Top     *StyleBorderTop
-	Left    *StyleBorderLeft
-	Bottom  *StyleBorderBottom
-	Right   *StyleBorderRight
-	InsideH *StyleInsideH
-	InsideV *StyleInsideV
+	XMLName xml.Name     `xml:"w:tcBorders,omitempty"`
+	Top     *StyleBorder `xml:"w:top,omitempty"`
+	Left    *StyleBorder `xml:"w:left,omitempty"`
+	Bottom  *StyleBorder `xml:"w:bottom,omitempty"`
+	Right   *StyleBorder `xml:"w:right,omitempty"`
+	InsideH *StyleBorder `xml:"w:insideH,omitempty"`
+	InsideV *StyleBorder `xml:"w:insideV,omitempty"`
 }
 
 // UnmarshalXML
@@ -1417,42 +955,42 @@ func (s *StyleTcBorders) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error 
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "top":
-				var value StyleBorderTop
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Top = &value
 			case "bottom":
-				var value StyleBorderBottom
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Bottom = &value
 			case "left":
-				var value StyleBorderLeft
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Left = &value
 			case "right":
-				var value StyleBorderRight
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Right = &value
 			case "insideH":
-				var value StyleInsideH
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.InsideH = &value
 			case "insideV":
-				var value StyleInsideV
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
@@ -1470,11 +1008,11 @@ func (s *StyleTcBorders) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error 
 }
 
 type StyleTblCellMar struct {
-	XMLName xml.Name `xml:"w:tblCellMar,omitempty"`
-	Top     *StyleMarginTop
-	Left    *StyleMarginLeft
-	Bottom  *StyleMarginBottom
-	Right   *StyleMarginRight
+	XMLName xml.Name      `xml:"w:tblCellMar,omitempty"`
+	Top     *StyleCellMar `xml:"w:top,omitempty"`
+	Left    *StyleCellMar `xml:"w:left,omitempty"`
+	Bottom  *StyleCellMar `xml:"w:bottom,omitempty"`
+	Right   *StyleCellMar `xml:"w:right,omitempty"`
 }
 
 // UnmarshalXML
@@ -1491,28 +1029,28 @@ func (s *StyleTblCellMar) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "top":
-				var value StyleMarginTop
+				var value StyleCellMar
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Top = &value
 			case "left":
-				var value StyleMarginLeft
+				var value StyleCellMar
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Left = &value
 			case "bottom":
-				var value StyleMarginBottom
+				var value StyleCellMar
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Bottom = &value
 			case "right":
-				var value StyleMarginRight
+				var value StyleCellMar
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
@@ -1531,13 +1069,13 @@ func (s *StyleTblCellMar) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error
 }
 
 type StyleTblBorders struct {
-	XMLName xml.Name `xml:"w:tblBorders,omitempty"`
-	Top     *StyleBorderTop
-	Left    *StyleBorderLeft
-	Bottom  *StyleBorderBottom
-	Right   *StyleBorderRight
-	InsideH *StyleInsideH
-	InsideV *StyleInsideV
+	XMLName xml.Name     `xml:"w:tblBorders,omitempty"`
+	Top     *StyleBorder `xml:"w:top,omitempty"`
+	Left    *StyleBorder `xml:"w:left,omitempty"`
+	Bottom  *StyleBorder `xml:"w:bottom,omitempty"`
+	Right   *StyleBorder `xml:"w:right,omitempty"`
+	InsideH *StyleBorder `xml:"w:insideH,omitempty"`
+	InsideV *StyleBorder `xml:"w:insideV,omitempty"`
 }
 
 // UnmarshalXML
@@ -1554,42 +1092,42 @@ func (s *StyleTblBorders) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error
 		if tt, ok := t.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "top":
-				var value StyleBorderTop
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Top = &value
 			case "bottom":
-				var value StyleBorderBottom
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Bottom = &value
 			case "left":
-				var value StyleBorderLeft
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Left = &value
 			case "right":
-				var value StyleBorderRight
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.Right = &value
 			case "insideH":
-				var value StyleInsideH
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
 				}
 				s.InsideH = &value
 			case "insideV":
-				var value StyleInsideV
+				var value StyleBorder
 				err = d.DecodeElement(&value, &tt)
 				if trapExpectedError(err) {
 					return err
@@ -1609,7 +1147,7 @@ func (s *StyleTblBorders) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error
 type StyleTcPr struct {
 	XMLName   xml.Name `xml:"w:tcPr,omitempty"`
 	TcBorders *StyleTcBorders
-	VAlign    *StyleVAlign
+	VAlign    *StyleVal `xml:"w:vAlign,omitempty"`
 	Shd       *StyleShd
 }
 
@@ -1641,7 +1179,7 @@ func (s *StyleTcPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				}
 				s.Shd = &value
 			case "vAlign":
-				s.VAlign = &StyleVAlign{Val: getAtt(tt.Attr, "val")}
+				s.VAlign = getVal(tt.Attr)
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -1658,8 +1196,8 @@ type StyleTblPr struct {
 	XMLName             xml.Name `xml:"w:tblPr,omitempty"`
 	TblInd              *StyleTblInd
 	TblCellMar          *StyleTblCellMar
-	TblStyleRowBandSize *StyleTblStyleRowBandSize
-	TblStyleColBandSize *StyleTblStyleColBandSize
+	TblStyleRowBandSize *StyleVal `xml:"w:tblStyleRowBandSize,omitempty"`
+	TblStyleColBandSize *StyleVal `xml:"w:tblStyleColBandSize,omitempty"`
 	TblBorders          *StyleTblBorders
 }
 
@@ -1698,9 +1236,9 @@ func (s *StyleTblPr) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) error {
 				}
 				s.TblBorders = &value
 			case "tblStyleRowBandSize":
-				s.TblStyleRowBandSize = &StyleTblStyleRowBandSize{Val: getAtt(tt.Attr, "val")}
+				s.TblStyleRowBandSize = getVal(tt.Attr)
 			case "tblStyleColBandSize":
-				s.TblStyleColBandSize = &StyleTblStyleColBandSize{Val: getAtt(tt.Attr, "val")}
+				s.TblStyleColBandSize = getVal(tt.Attr)
 			default:
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -1900,24 +1438,24 @@ func (s *StyleDocDefaults) UnmarshalXML(d *xml.Decoder, _ xml.StartElement) erro
 }
 
 type StyleStyle struct {
-	XMLName        xml.Name `xml:"w:style,omitempty"`
-	Type           string   `xml:"w:type,attr,omitempty"`
-	Default        string   `xml:"w:default,attr,omitempty"`
-	CustomStyle    string   `xml:"w:customStyle,attr,omitempty"`
-	StyleId        string   `xml:"w:styleId,attr,omitempty"`
-	Name           *StyleName
-	Aliases        *StyleAliases
-	BasedOn        *StyleBasedOn
-	Next           *StyleNext
-	Link           *StyleLink
-	AutoRedifine   *StyleAutoRedefine
-	Hidden         *StyleHidden
-	UiPriority     *StyleUiPriority
-	SemiHidden     *StyleSemiHidden
-	Locked         *StyleLocked
-	UnhideWhenUsed *StyleUnhideWhenUsed
-	QFormat        *StyleQFormat
-	Rsid           *StyleRsid
+	XMLName        xml.Name  `xml:"w:style,omitempty"`
+	Type           string    `xml:"w:type,attr,omitempty"`
+	Default        string    `xml:"w:default,attr,omitempty"`
+	CustomStyle    string    `xml:"w:customStyle,attr,omitempty"`
+	StyleId        string    `xml:"w:styleId,attr,omitempty"`
+	Name           *StyleVal `xml:"w:name,omitempty"`
+	Aliases        *StyleVal `xml:"w:aliases,omitempty"`
+	BasedOn        *StyleVal `xml:"w:basedOn,omitempty"`
+	Next           *StyleVal `xml:"w:next,omitempty"`
+	Link           *StyleVal `xml:"w:link,omitempty"`
+	AutoRedifine   *StyleVal `xml:"w:autoRedefine,omitempty"`
+	Hidden         *StyleVal `xml:"w:hidden,omitempty"`
+	UiPriority     *StyleVal `xml:"w:uiPriority,omitempty"`
+	SemiHidden     *StyleVal `xml:"w:semiHidden,omitempty"`
+	Locked         *StyleVal `xml:"w:locked,omitempty"`
+	UnhideWhenUsed *StyleVal `xml:"w:unhideWhenUsed,omitempty"`
+	QFormat        *StyleVal `xml:"w:qFormat,omitempty"`
+	Rsid           *StyleVal `xml:"w:rsid,omitempty"`
 	PPr            *StylePPr
 	RPr            *StyleRPr
 	TblPr          *StyleTblPr
@@ -1954,31 +1492,31 @@ func (s *StyleStyle) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 		if tt, ok := token.(xml.StartElement); ok {
 			switch tt.Name.Local {
 			case "qFormat":
-				s.QFormat = &StyleQFormat{}
+				s.QFormat = emptyStruct
 			case "hidden":
-				s.Hidden = &StyleHidden{}
+				s.Hidden = emptyStruct
 			case "unhideWhenUsed":
-				s.UnhideWhenUsed = &StyleUnhideWhenUsed{}
+				s.UnhideWhenUsed = emptyStruct
 			case "semiHidden":
-				s.SemiHidden = &StyleSemiHidden{}
+				s.SemiHidden = emptyStruct
 			case "autoRedefine":
-				s.AutoRedifine = &StyleAutoRedefine{}
+				s.AutoRedifine = emptyStruct
 			case "locked":
-				s.Locked = &StyleLocked{}
+				s.Locked = emptyStruct
 			case "name":
-				s.Name = &StyleName{Val: getVal(tt.Attr)}
+				s.Name = getVal(tt.Attr)
 			case "aliases":
-				s.Aliases = &StyleAliases{Val: getVal(tt.Attr)}
+				s.Aliases = getVal(tt.Attr)
 			case "basedOn":
-				s.BasedOn = &StyleBasedOn{Val: getVal(tt.Attr)}
+				s.BasedOn = getVal(tt.Attr)
 			case "next":
-				s.Next = &StyleNext{Val: getVal(tt.Attr)}
+				s.Next = getVal(tt.Attr)
 			case "link":
-				s.Link = &StyleLink{Val: getVal(tt.Attr)}
+				s.Link = getVal(tt.Attr)
 			case "uiPriority":
-				s.UiPriority = &StyleUiPriority{Val: getAtt(tt.Attr, "val")}
+				s.UiPriority = getVal(tt.Attr)
 			case "rsid":
-				s.Rsid = &StyleRsid{Val: getVal(tt.Attr)}
+				s.Rsid = getVal(tt.Attr)
 			case "pPr":
 				var value StylePPr
 				err = d.DecodeElement(&value, &tt)

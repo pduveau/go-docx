@@ -34,7 +34,7 @@ func TestShapeStructure(t *testing.T) {
 	para1 := w.AddParagraph()
 	// add text
 	para1.AddText("test anchor shape")
-	para1.AddAnchorShape(808355, 238760, "AutoShape", "auto", "straightConnector1",
+	para1.AddAnchorShape(808355, 238760, "auto", "straightConnector1",
 		&ALine{
 			W:         9525,
 			SolidFill: &ASolidFill{SrgbClr: &ASrgbClr{Val: "000000"}},
@@ -46,7 +46,7 @@ func TestShapeStructure(t *testing.T) {
 
 	para2 := w.AddParagraph()
 	para2.AddText("test inline shape")
-	para2.AddInlineShape(808355, 238760, "AutoShape", "auto", "straightConnector1",
+	para2.AddInlineShape(808355, 238760, "auto", "straightConnector1",
 		&ALine{
 			W:         9525,
 			SolidFill: &ASolidFill{SrgbClr: &ASrgbClr{Val: "000000"}},
