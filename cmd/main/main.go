@@ -49,7 +49,7 @@ func main() {
 		w = docx.New().WithDefaultTheme().WithA4Page()
 		// add new paragraph
 		para1 := w.AddParagraph().Justification("distribute")
-		r, err := para1.AddAnchorDrawingFrom("testdata/fumiama.JPG")
+		r, err := para1.AddAnchorDrawingFrom("testdata/image.JPG")
 		if err != nil {
 			panic(err)
 		}
@@ -84,13 +84,13 @@ func main() {
 		para3.AddText("一行2个 inline").Size("44")
 
 		para4 := w.AddParagraph().Justification("center")
-		r, err = para4.AddInlineDrawingFrom("testdata/fumiama.JPG")
+		r, err = para4.AddInlineDrawingFrom("testdata/image.JPG")
 		if err != nil {
 			panic(err)
 		}
 		r.Children[0].(*docx.Drawing).Inline.Size(r.Children[0].(*docx.Drawing).Inline.Extent.CX*4/5, r.Children[0].(*docx.Drawing).Inline.Extent.CY*4/5)
 		para4.AddTab().AddTab()
-		r, err = para4.AddInlineDrawingFrom("testdata/fumiama2x.webp")
+		r, err = para4.AddInlineDrawingFrom("testdata/image.webp")
 		if err != nil {
 			panic(err)
 		}
@@ -102,7 +102,7 @@ func main() {
 		para5.AddText("一行1个 横向 inline").Size("44")
 
 		para6 := w.AddParagraph()
-		_, err = para6.AddInlineDrawingFrom("testdata/fumiamayoko.png")
+		_, err = para6.AddInlineDrawingFrom("testdata/image.png")
 		if err != nil {
 			panic(err)
 		}
@@ -133,7 +133,7 @@ func main() {
 		tbl2.Rows[0].Cells[0].Shade("clear", "auto", "E7E6E6")
 
 		p := w.AddParagraph().Justification("center")
-		p.AddText("测试 AutoShape w:ln").Size("44")
+		p.AddText("AutoShape w:ln").Size("44")
 		_ = p.AddAnchorShape(808355, 238760, "auto", "straightConnector1",
 			&docx.ALine{
 				W:         9525,

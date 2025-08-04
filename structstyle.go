@@ -32,6 +32,10 @@ func getVal(atts []xml.Attr) *StyleVal {
 	return &StyleVal{}
 }
 
+func StyleSetVal(val string) *StyleVal {
+	return &StyleVal{Val: val}
+}
+
 func getW14Val(atts []xml.Attr) *StyleW14Val {
 	for _, at := range atts {
 		if at.Name.Local == "val" {

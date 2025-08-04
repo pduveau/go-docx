@@ -229,7 +229,8 @@ func (f *Docx) WriteTo(writer io.Writer) (_ int64, err error) {
 	zipWriter := zip.NewWriter(writer)
 	defer zipWriter.Close()
 
-	return 0, f.pack(zipWriter)
+	err = f.pack(zipWriter)
+	return
 }
 
 // ReadDocument allow to load a document as a template to append
@@ -247,6 +248,17 @@ func ReadDocument(path string) (doc *Docx, err error) {
 		return
 	}
 	doc, err = Parse(f, int64(fi.Size()))
+	return
+}
+
+func (d *Docx) WriteDocument(path string) (err error) {
+	var f *os.File
+
+	f, err = os.Create(path)
+	if err == nil {
+		defer f.Close()
+		_, err = d.WriteTo(f)
+	}
 	return
 }
 

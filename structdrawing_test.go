@@ -33,12 +33,12 @@ func TestDrawingStructure(t *testing.T) {
 	// add new paragraph
 	para1 := w.AddParagraph()
 	// add text
-	para1.AddText("直接粘贴 inline").
+	para1.AddText("inline").
 		Shade("clear", "auto", "E7E6E6").
 		AddTab().Bold().Underline("single").
 		Highlight("yellow").Italic().
 		Font("宋体", "宋体", "宋体", "eastAsia")
-	r, err := para1.AddAnchorDrawingFrom("testdata/fumiama.JPG")
+	r, err := para1.AddAnchorDrawingFrom("testdata/image.JPG")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,12 +46,12 @@ func TestDrawingStructure(t *testing.T) {
 	r.Children[0].(*Drawing).Anchor.Graphic.GraphicData.Pic.NonVisualPicProperties.CNvPicPr.Locks = &APicLocks{NoChangeAspect: 1}
 	r.Children[0].(*Drawing).Anchor.Graphic.GraphicData.Pic.SpPr.Xfrm.Rot = 50000
 	para2 := w.AddParagraph().Justification("center")
-	para2.AddInlineDrawingFrom("testdata/fumiama.JPG")
+	para2.AddInlineDrawingFrom("testdata/image.JPG")
 	para2.AddTab().AddTab().AddTab().AddTab()
-	para2.AddInlineDrawingFrom("testdata/fumiama2x.webp")
+	para2.AddInlineDrawingFrom("testdata/image.webp")
 
 	para3 := w.AddParagraph()
-	para3.AddInlineDrawingFrom("testdata/fumiamayoko.png")
+	para3.AddInlineDrawingFrom("testdata/image.png")
 
 	f, err := os.Create("TestMarshalDrawingStructure.xml")
 	if err != nil {

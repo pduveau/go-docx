@@ -53,7 +53,7 @@ And you will see two files generated under `pwd` with the same contents as below
 
 ## Use Package in your Project
 ```bash
-go get -d github.com/fumiama/go-docx@latest
+go get -d github.com/pduveau/go-docx@latest
 ```
 ### Generate Document
 ```go
@@ -63,26 +63,25 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fumiama/go-docx"
+	"github.com/pduveau/go-docx"
 )
 
 func main() {
-	w := docx.New().WithDefaultTheme()
+	w := docx.New().WithDefaultTheme().WithA4Page()
 	// add new paragraph
 	para1 := w.AddParagraph()
 	// add text
 	para1.AddText("test").AddTab()
 	para1.AddText("size").Size("44").AddTab()
-	f, err := os.Create("generated.docx")
+
 	// save to file
+	f, err := os.Create("generated.docx")
 	if err != nil {
 		panic(err)
 	}
+	defer f.Close()
+
 	_, err = w.WriteTo(f)
-	if err != nil {
-		panic(err)
-	}
-	err = f.Close()
 	if err != nil {
 		panic(err)
 	}
@@ -97,20 +96,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fumiama/go-docx"
+	"github.com/pduveau/go-docx"
 )
 
 func main() {
-	readFile, err := os.Open("file2parse.docx")
-	if err != nil {
-		panic(err)
-	}
-	fileinfo, err := readFile.Stat()
-	if err != nil {
-		panic(err)
-	}
-	size := fileinfo.Size()
-	doc, err := docx.Parse(readFile, size)
+	doc, err := docx.ReadDocument("file2parse.docx")
 	if err != nil {
 		panic(err)
 	}
@@ -120,6 +110,158 @@ func main() {
 		case *docx.Paragraph, *docx.Table: // printable
 			fmt.Println(it)
 		}
+	}
+}
+```
+### Generate Document with styles and tables
+```go
+package main
+
+import (
+	"os"
+	"strings"
+
+	"github.com/pduveau/go-docx"
+)
+
+func main() {
+	w := docx.New().WithDefaultTheme().WithA4Page()
+
+	// ada a paragraph style
+	myStylePara := &docx.StyleStyle{
+		Type:        "paragraph",
+		CustomStyle: "1",
+		StyleId:     "myStylePara",
+		Name:        &docx.StyleVal{Val: "My Style Para"},
+		QFormat:     &docx.StyleVal{},
+		PPr: &docx.StylePPr{
+			Spacing: &docx.StyleSpacing{
+				After:    "0",
+				Line:     "240",
+				LineRule: "auto",
+			},
+		},
+		RPr: &docx.StyleRPr{
+			RFonts: &docx.StyleRFonts{
+				Ascii: "Calibri",
+				HAnsi: "Calibri",
+			},
+			Sz: &docx.StyleVal{Val: "22"},
+		},
+	}
+
+	w.AddOrReplaceStyle(myStylePara)
+
+	myTableBorder := &docx.StyleBorder{
+		Val:   "single",
+		Sz:    "4",
+		Space: "0",
+		Color: "auto",
+	}
+
+	myTableCellMargin := &docx.StyleCellMar{
+		W:    "57",
+		Type: "dxa",
+	}
+
+	myStyleTable := &docx.StyleStyle{
+		Type:        "table",
+		CustomStyle: "1",
+		StyleId:     "myStyleTable",
+		Name:        &docx.StyleVal{Val: "My Style Table"},
+		BasedOn:     &docx.StyleVal{Val: "TableauNormal"},
+		UiPriority:  &docx.StyleVal{Val: "99"},
+		PPr: &docx.StylePPr{
+			Spacing: &docx.StyleSpacing{
+				After:    "0",
+				Line:     "240",
+				LineRule: "auto",
+			},
+		},
+		RPr: &docx.StyleRPr{
+			RFonts: &docx.StyleRFonts{
+				Ascii: "Calibri",
+				HAnsi: "Calibri",
+			},
+			Sz: &docx.StyleVal{Val: "22"},
+		},
+		TblPr: &docx.StyleTblPr{
+			TblStyleRowBandSize: &docx.StyleVal{Val: "1"},
+			TblStyleColBandSize: &docx.StyleVal{Val: "1"},
+			TblBorders: &docx.StyleTblBorders{
+				Top:     myTableBorder,
+				Bottom:  myTableBorder,
+				Left:    myTableBorder,
+				Right:   myTableBorder,
+				InsideH: myTableBorder,
+				InsideV: myTableBorder,
+			},
+			TblCellMar: &docx.StyleTblCellMar{
+				Left:  myTableCellMargin,
+				Right: myTableCellMargin,
+			},
+		},
+		TcPr: &docx.StyleTcPr{
+			Shd: &docx.StyleShd{
+				Val:   "clear",
+				Color: "auto",
+				Fill:  "auto",
+			},
+			VAlign: &docx.StyleVal{Val: "center"},
+		},
+		TblStylePr: []*docx.StyleTblStylePr{
+			&docx.StyleTblStylePr{
+				Type: "firstCol",
+				RPr: &docx.StyleRPr{
+					B: &docx.StyleVal{},
+				},
+			},
+			&docx.StyleTblStylePr{
+				Type: "band1Vert",
+				PPr: &docx.StylePPr{
+					Jc: &docx.StyleVal{Val: "left"},
+				},
+			},
+			&docx.StyleTblStylePr{
+				Type: "band1Horz",
+				TcPr: &docx.StyleTcPr{
+					Shd: &docx.StyleShd{
+						Val:            "clear",
+						Color:          "auto",
+						Fill:           "D9D9D9",
+						ThemeFill:      "background1",
+						ThemeFillShade: "D9",
+					},
+				},
+			},
+		},
+	}
+
+	w.AddOrReplaceStyle(myTableBorder)
+
+	tab := w.AddTableEmpty()
+	tab.Style("myStyleTable", docx.TABLE_STYLE_OPTION_HORIZONTAL_BAND|docx.TABLE_STYLE_OPTION_FIRST_COLUMN)
+
+	row := tab.AddRow()
+
+	// KeepNext enforce no page break between the two rows
+	row.AddCell().AddParagraph().Style("myStylePara").KeepNext().LangCheck(false).AddText("fr-FR")
+
+	row.AddCell().AddParagraph().Style("myStylePara").KeepNext().LangCheck("fr-FR").AddText("Il faut beau.").Italic(true)
+
+	row = tab.AddRow()
+
+	row.AddCell().AddParagraph().Style("myStylePara").LangCheck(false).AddText("en-GB")
+
+	// KeepLine enforce no page break in the middle of the cell as the \n change line without changing paragraph (maj+enter)
+	para = row.AddCell().AddParagraph().Style("myStylePara").LangCheck("en-GB").KeepLines()
+	para.AddText("Weather is nice\n").Bold(true)
+	para.AddText("but not for a long time.").Underline("single")
+
+	// save to file
+	err := w.WriteDocument("newdoc.docx")
+	if err != nil {
+		panic(err)
 	}
 }
 ```
