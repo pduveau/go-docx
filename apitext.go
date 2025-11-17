@@ -52,9 +52,11 @@ func (p *Paragraph) AddText(text string) *Run {
 				c = append(c, &Tab{})
 			}
 			if k != "" {
-				c = append(c, &Text{
-					Text: k,
-				})
+				t := &Text{Text: k}
+				if strings.TrimSpace(k) != k {
+					t.XMLSpace = "preserve"
+				}
+				c = append(c, t)
 			}
 		}
 	}
