@@ -26,6 +26,7 @@ import (
 	"encoding/xml"
 	"io"
 	"os"
+	"regexp"
 )
 
 // pack receives a zip file writer (word documents are a zip with multiple xml inside)
@@ -53,6 +54,18 @@ func (f *Docx) pack(zipWriter *zip.Writer) (err error) {
 	files["word/_rels/document.xml.rels"] = marshaller{data: &f.docRelation}
 	files["word/document.xml"] = marshaller{data: &f.Document}
 	files["word/styles.xml"] = marshaller{data: &f.styles}
+
+	if f.DocProps.ContentStatus != nil {
+		// dirty but do the job for my need
+		re := regexp.MustCompile(`(.*)<cp:contentStatus>.*</cp:contentStatus>(.*)`)
+		ins := "<cp:contentStatus>" + *f.DocProps.ContentStatus + "</cp:contentStatus>"
+		t := re.FindStringSubmatch(string(f.DocProps.data))
+		if len(t) == 3 {
+			files["docProps/core.xml"] = bytes.NewReader([]byte(t[1] + ins + t[2]))
+		} else {
+			files["docProps/core.xml"] = bytes.NewReader([]byte(string(f.DocProps.data[:len(f.DocProps.data)-20]) + ins + "</cp:coreProperties>"))
+		}
+	}
 
 	for _, m := range f.media {
 		files[m.String()] = bytes.NewReader(m.Data)

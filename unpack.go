@@ -22,6 +22,7 @@ package docx
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/xml"
 	"errors"
 	"io"
@@ -85,6 +86,21 @@ func unpack(zipReader *zip.Reader) (docx *Docx, err error) {
 				docx.imageID = n
 			}
 			continue
+		}
+
+		if f.Name == "docProps/core.xml" {
+			var zf io.ReadCloser
+			zf, err = f.Open()
+			if err != nil {
+				return
+			}
+			b := &bytes.Buffer{}
+			_, err = b.ReadFrom(zf)
+			zf.Close()
+			if err != nil {
+				return
+			}
+			docx.DocProps.data = b.Bytes()
 		}
 
 		if docsFileRe.MatchString(f.Name) {

@@ -42,6 +42,11 @@ type Docx struct {
 
 	styles *Styles
 
+	DocProps struct {
+		ContentStatus *string
+		data          []byte
+	}
+
 	media        []Media
 	mediaNameIdx map[string]int
 
