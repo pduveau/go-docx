@@ -134,6 +134,8 @@ func (p *SdtEndProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) 
 type SdtContent struct {
 	XMLName xml.Name `xml:"w:sdtContent,omitempty"`
 	P       []*Paragraph
+
+	isToc bool
 }
 
 // UnmarshalXML ...
@@ -155,6 +157,7 @@ func (c *SdtContent) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
 				}
+				c.P = append(c.P, value)
 			} else {
 				err = d.Skip() // skip unsupported tags
 				if err != nil {
@@ -163,39 +166,41 @@ func (c *SdtContent) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 			}
 		}
 	}
-	c.P = []*Paragraph{
-		value,
-		&Paragraph{
-			Children: []interface{}{
-				&Run{
-					FldChar: &RunFldChar{FldCharType: "begin"},
-				},
-				&Run{
-					InstrText: &RunInstrText{Space: "preserve", Text: ` TOC \o "1-3" \h \z \u `},
-				},
-				&Run{
-					FldChar: &RunFldChar{FldCharType: "separate"},
-				},
-				&Run{
-					RunProperties: &RunProperties{
-						Bold: &Bold{},
-						BCs:  &struct{}{},
+	if c.isToc {
+		c.P = []*Paragraph{
+			value,
+			{
+				Children: []interface{}{
+					&Run{
+						FldChar: &RunFldChar{FldCharType: "begin"},
 					},
-					Children: []interface{}{
-						&Text{
-							Text: "To be updated",
+					&Run{
+						InstrText: &RunInstrText{Space: "preserve", Text: ` TOC \o "1-3" \h \z \u `},
+					},
+					&Run{
+						FldChar: &RunFldChar{FldCharType: "separate"},
+					},
+					&Run{
+						RunProperties: &RunProperties{
+							Bold: &Bold{},
+							BCs:  &struct{}{},
+						},
+						Children: []interface{}{
+							&Text{
+								Text: "To be updated",
+							},
 						},
 					},
-				},
-				&Run{
-					RunProperties: &RunProperties{
-						Bold: &Bold{},
-						BCs:  &struct{}{},
+					&Run{
+						RunProperties: &RunProperties{
+							Bold: &Bold{},
+							BCs:  &struct{}{},
+						},
+						FldChar: &RunFldChar{FldCharType: "end"},
 					},
-					FldChar: &RunFldChar{FldCharType: "end"},
 				},
 			},
-		},
+		}
 	}
 	return nil
 }
@@ -236,6 +241,9 @@ func (p *Sdt) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 				p.SdtEndPr = &pr
 			case "sdtContent":
 				var content SdtContent
+				content.isToc = p.SdtPr != nil && p.SdtPr.DocPartObj != nil && p.SdtPr.DocPartObj.DocPartGallery != nil &&
+					p.SdtPr.DocPartObj.DocPartGallery.Val == "Table of Contents"
+
 				err = d.DecodeElement(&content, &tt)
 				if err != nil && !strings.HasPrefix(err.Error(), "expected") {
 					return err
